@@ -1,0 +1,52 @@
+Class,Sound,Species,Category
+AEAC,Northern saw-whet owl,Aegolius acadicus,Owl
+BRCA,Canada goose,Branta canadensis,Game bird
+BRMA,Marbled murrelet,Brachyramphus marmoratus,Other bird
+BUVI,Great horned owl,Bubo virginianus,Owl
+CAGU,Hermit thrush,Catharus guttatus,Songbird
+CALU,Wolf howl,Canis lupus,Mammal
+CAUS,Swainson's thrush,Catharus ustulatus,Songbird
+CCOO,Olive-sided flycatcher,Contopus cooperi,Songbird
+CHFA,Wrentit,Chamaea fasciata,Songbird
+CHMI,Common nighthawk call,Chordeiles minor,Other bird
+CHMI_IRREG,Common nighthawk boom,Chordeiles minor,Other bird
+COAU,Northern flicker series,Colaptes auratus,Woodpecker
+COAU2,Northern flicker 'skew',Colaptes auratus,Woodpecker
+COCO,Common raven,Corvus corax,Corvid
+CYST,Steller's jay,Cyanocitta stelleri,Corvid
+DEFU,Sooty grouse,Dendragapus fuliginosus,Game bird
+DOG,Dog barks,NA,Nuisance
+DRPU,Downy woodpecker call,Dryobates pubescens,Woodpecker
+DRUM,Woodpecker spp. drum,NA,Woodpecker
+FLY,Insect buzz,NA,Nuisance
+FROG,Frog chorus,NA,Nuisance
+GLGN,Northern pygmy-owl,Glaucidium gnoma,Owl
+HOSA,Human speech,NA,Nuisance
+HYPI,Pileated woodpecker call,Dryocopus pileatus,Woodpecker
+INSP,Barred owl inspection call,Strix varia,Owl
+IXNA,Varied thrush,Ixoreus naevius,Songbird
+MEKE,Western screech-owl,Megascops kennicotti,Owl
+MYTO,Townsend's solitaire,Myadestes townsendi,Songbird
+NUCO,Clark's nutcracker,Nucifraga columbiana,Songbird
+OCPR,American pika,Ochotona princeps,Mammal
+ORPI,Mountain quail,Oreortyx pictus,Game bird
+PAFA,Band-tailed pigeon,Patagioenas fasciata,Game bird
+PECA,Canada jay,Perisoreus canadensis,Corvid
+PHNU,Common poorwill,Phalaenoptilus nuttallii,Other bird
+PIMA,Spotted towhee,Pipilo maculatus,Songbird
+POEC,Chickadee song,Poecile spp.,Songbird
+PSFL,Flammulated owl,Psiloscops flammeolus,Owl
+SHOT,Gunshot,NA,Nuisance
+SITT,Nuthatch,Sitta sp.,Songbird
+SPRU,Sapsucker drum,Sphyrapicus spp.,Woodpecker
+STOC,Spotted owl location call,Strix occidentalis,Owl
+STOC_IRREG,Spotted owl series call,Strix occidentalis,Owl
+STVA,Barred owl eight-note call,Strix varia,Owl
+STVA_IRREG,Barred owl series call,Strix varia,Owl
+TADO1,Douglas' squirrel rattle,Tamasciurus douglasii,Mammal
+TADO2,Douglas' squirrel chirp,Tamasciurus douglasii,Mammal
+TAMI,Chipmunk chirp,Neotamias sp.,Mammal
+TUMI,American robin whinny,Turdus migratorius,Songbird
+WHIS,Strix owl contact whistle,Strix sp.,Owl
+YARD,Yarder (machine),NA,Nuisance
+ZEMA,Mourning dove,Zenaida macroura,Game bird
