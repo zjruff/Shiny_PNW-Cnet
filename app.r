@@ -1,5 +1,5 @@
-# Updated Feb 2022.
-# Makes use of CNN v4 (51-class). See ./readme.txt for descriptions of each class.
+# Updated March 2022.
+# Makes use of CNN v4 (51-class). See ./target_classes.csv for descriptions of each class.
 
 library(keras)
 library(lubridate)
