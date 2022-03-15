@@ -17,8 +17,8 @@ model_path = "./Owl_CNN_v4_TF.h5"
 sox_dir = "C:/Program Files (x86)/sox-14-4-2"
 sox_path = file.path(sox_dir, "sox")
 
-# Size of batches of spectrogram images fed to the CNN. A larger batch size will 
-# increases memory usage but may be slightly faster.
+# Size of batches of spectrogram images fed to the CNN. A larger batch size may
+# be slightly faster but will increase memory usage.
 batchsize = 16
 
 class_list <- read_csv("./target_classes.csv", show_col_types = FALSE) %>% 
