@@ -1,5 +1,6 @@
 # Updated March 2022.
-# Makes use of CNN v4 (51-class). See ./target_classes.csv for descriptions of each class.
+# Makes use of PNW-Cnet version 4 (51-class). See ./target_classes.csv for 
+# descriptions of each class.
 
 library(keras)
 library(lubridate)
@@ -11,7 +12,7 @@ library(tuneR)
 source("./functions.r")
 
 ncores = detectCores(logical = FALSE)
-model_path = "./Owl_CNN_v4_TF.h5"
+model_path = "./PNW-Cnet_v4_TF.h5"
 
 # Change the following line if you installed SoX in a different location.
 sox_dir = "C:/Program Files (x86)/sox-14-4-2"
@@ -21,9 +22,12 @@ sox_path = file.path(sox_dir, "sox")
 # be slightly faster but will increase memory usage.
 batchsize = 16
 
-class_list <- read_csv("./target_classes.csv", show_col_types = FALSE) %>% 
+class_desc <- read_csv("./target_classes.csv", show_col_types = FALSE)
+class_list <- class_desc %>% 
   mutate(Str_Class = paste0(Class, " - ", Sound)) %>% 
   pull(Str_Class)
+class_names <- class_desc %>% pull(Class)
+
 
 ui = fluidPage(
 	useShinyjs(),
@@ -225,7 +229,7 @@ server = function(input, output, session) {
 		cat("\nProceeding to CNN classification...\n")
 		
 		# Classify spectrograms, write predictions to output file
-		predictions <- CNN_proc(workDir, cnn_path, batchsize)
+		predictions <- CNN_proc(workDir, cnn_path, class_names, batchsize)
 		outfile <- file.path(targetDir, sprintf("CNN_Predictions_%s.csv", outname))
 		write_csv(predictions, outfile)
 		

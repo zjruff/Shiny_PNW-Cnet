@@ -1,5 +1,5 @@
 # Updated Feb 2022.
-# Function definitions for the Shiny_CNN_v4 app.
+# Function definitions for the Shiny_PNW-Cnet app.
 
 # Extract short clips from longer wav files. Assumes clips are 12 s in length.
 wavExtract <- function(srcfile, dstfile, sox_path) {
@@ -95,14 +95,7 @@ getFolder <- Vectorize(function(filepath, indir) {
 
 # Use a Keras model file to make predictions on images within a folder.
 # targetDir should be .../Temp, i.e. the parent folder.
-CNN_proc <- function(targetDir, model_path, batchsize) {
-	class_names = c('AEAC', 'BRCA', 'BRMA', 'BUVI', 'CAGU', 'CALU', 'CAUS', 'CCOO', 
-	                'CHFA', 'CHMI', 'CHMI_IRREG', 'COAU', 'COAU2', 'COCO', 'CYST', 
-	                'DEFU', 'DOG', 'DRPU', 'DRUM', 'FLY', 'FROG', 'GLGN', 'HOSA', 
-	                'HYPI', 'INSP', 'IXNA', 'MEKE', 'MYTO', 'NUCO', 'OCPR', 'ORPI',
-	                'PAFA', 'PECA', 'PHNU', 'PIMA', 'POEC', 'PSFL', 'SHOT', 'SITT',
-	                'SPRU', 'STOC', 'STOC_IRREG', 'STVA', 'STVA_IRREG', 'TADO1', 
-	                'TADO2', 'TAMI', 'TUMI', 'WHIS', 'YARD', 'ZEMA')
+CNN_proc <- function(targetDir, model_path, class_names, batchsize) {
 	
 	outputDir = dirname(targetDir)
 
