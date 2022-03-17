@@ -47,10 +47,10 @@ ui = fluidPage(
       		textInput("topdir", h5("Copy and paste (recommended) or type target directory path into box and click Check Directory:")),
       		actionButton("checkdirbutton", label="Check Directory"),
       		br(),
-      		h5("Click Process Files to generate spectrograms and use CNN to predict class scores. This may take several hours. Please make sure all inputs are correct and that your computer will not go to sleep, shut down or restart during this process."),
+      		h5("Click Process Files to generate spectrograms and use PNW-Cnet to predict class scores. This may take several hours. Please make sure all inputs are correct and that your computer will not go to sleep, shut down or restart during this process."),
       		actionButton("processbutton", label = "Process Files", disabled = TRUE),
       		br(),
-      		h5("Click Create Review File to examine an existing CNN output file and determine which clips need to be validated."),
+      		h5("Click Create Review File to examine an existing CNN_Predictions file and determine which clips need to be validated."),
       		actionButton("revExtButton", label = "Create Review File", disabled = TRUE),
       		br(),
       		h5("Click Extract Review Clips to extract apparent detections as 12-second clips for further review or archival."),
@@ -144,8 +144,12 @@ server = function(input, output, session) {
 	  } else { toggleState(id = "processbutton", condition = FALSE) }
 	  
 	  if (predfile != "") {
-	    toggleState(id = "revExtButton", condition = TRUE)
-	    toggleState(id = "exploreDetsButton", condition = TRUE) 
+	    toggleState(id = "processbutton", condition = FALSE)
+	    toggleState(id = "exploreDetsButton", condition = TRUE)
+	    if (revfile != ""){
+	      toggleState(id = "revExtButton", condition = FALSE)
+	    } else { toggleState(id = "revExtButton", condition = TRUE) 
+	      }
 	    } else {
 	      toggleState(id = "revExtButton", condition = FALSE) 
 	      toggleState(id = "exploreDetsButton", condition = FALSE)
