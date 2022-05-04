@@ -49,7 +49,7 @@ getStrWeek <- Vectorize(function(numweek) {
 # Search a directory tree for files with the right extension and return a list.
 findFiles <- function(topdir, extension) {
 	files = list.files(path = topdir,
-						pattern = paste0(c("[[:alnum:][:punct:]]+", extension), collapse = ''),
+						pattern = sprintf("%s$", extension),
 						recursive = TRUE,
 						full.names = TRUE)
 	return(files)
