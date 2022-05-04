@@ -89,7 +89,7 @@ ui = fluidPage(
       		br(),
       		h4(textOutput({"revFilesFound"})),
       		br(),
-      		h4(textOutput({"wavsFound"})),
+      		h4(tagAppendAttributes(textOutput("wavsFound"), style = "white-space:pre-wrap;")),
       		fluidRow(column(12, div(tableOutput( {"showFiles"} ), 
       		                        style="height:500px;overflow-y:scroll"))),
       		# br(),
@@ -182,6 +182,27 @@ server = function(input, output, session) {
 		wavs_found = findFiles(in_dir, ".wav")
 		valid_wavs = wavs_found[ lapply(wavs_found, file.size) >= 500000 ]
 		valid_wavs[ lapply(valid_wavs, rmParts) == TRUE ]
+	})
+	
+	# Return a text summary with the number of wav files in the directory tree and
+	# their total duration and size.
+	wavSummary <- eventReactive(input$checkdirbutton, {
+	  wavs <- getWavs()
+	  n_wavs <- length(wavs)
+	  if(n_wavs == 0) {
+	    message <- "Directory tree contains no valid .wav files."
+	  } else {
+	    durs <- sapply(wavs, getDuration)
+	    sizes <- sapply(wavs, file.size)
+	    total_dur <- sum(durs) / 3600
+	    total_size <- sum(sizes) / 1024^3
+	    
+	    message <- paste(sprintf("Directory tree contains %d valid .wav files.", n_wavs),
+	                     sprintf(" - Total duration: %.1f hours", total_dur),
+	                     sprintf(" - Total size: %.1f GB", total_size), 
+	                     sep = "\n")
+	  }
+	  return( message )
 	})
 	
 	# Starts processing wav files when user hits the button.. The envir argument 
@@ -347,7 +368,7 @@ server = function(input, output, session) {
 	output$wavsFound <- renderText({
 		if (checkDir() == "invalid") { 
 			"Invalid directory." } else {
-			sprintf("Directory tree contains %d valid .wav files.", length(getWavs())) }
+			wavSummary() }
 	})
 
 	output$predsFound <- renderText({

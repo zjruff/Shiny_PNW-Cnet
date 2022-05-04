@@ -93,6 +93,14 @@ getFolder <- Vectorize(function(filepath, indir) {
 	return(folder)
 })
 
+# Return the duration of a .wav file in seconds, or 0 if it cannot be read.
+getDuration <- function(path) {
+  wavLength <-tryCatch( { 
+    params <- suppressWarnings(readWave(path, header = TRUE))
+    params$samples / params$sample.rate
+  }, error = function(cond) { 0 } )
+}
+
 # Use a Keras model file to make predictions on images within a folder.
 # targetDir should be .../Temp, i.e. the parent folder.
 CNN_proc <- function(targetDir, model_path, class_names, batchsize) {
