@@ -1,15 +1,16 @@
-# Updated March 2022.
+# Updated Aug 2022.
 # Makes use of PNW-Cnet version 4 (51-class). See ./target_classes.csv for 
 # descriptions of each class.
 
-library(keras)
 library(lubridate)
 library(parallel)
+library(reticulate)
 library(shinyjs)
 library(tidyverse)
 library(tuneR)
 
 source("./functions.r")
+source_python("./scripts/pnw-cnet_v4_predict.py")
 
 ncores = detectCores(logical = FALSE)
 model_path = "./PNW-Cnet_v4_TF.h5"
@@ -221,21 +222,21 @@ server = function(input, output, session) {
 	  }
 
 		cnn_path = model_path
-		targetDir = correctedDir()
+		target_dir = correctedDir()
 
-		comps = strsplit(basename(targetDir), "_")[[1]]
+		comps = strsplit(basename(target_dir), "_")[[1]]
 		outname = if ( comps[1] == "Stn" ) {
-			paste(basename(dirname(targetDir)), comps[2], sep = "-") } else {
-			basename(targetDir) }
+			paste(basename(dirname(target_dir)), comps[2], sep = "-") } else {
+			basename(target_dir) }
 
-		workDir = file.path(targetDir, "Temp")
-		imgDir = file.path(workDir, "images")
-		if (!dir.exists(workDir)) { 
-			dir.create(workDir) 
-			dir.create(imgDir) }
+		temp_dir = file.path(target_dir, "Temp")
+		image_dir = file.path(temp_dir, "images")
+		if (!dir.exists(temp_dir)) { 
+			dir.create(temp_dir) 
+			dir.create(image_dir) }
 
 		# Check if spectrograms have already been generated. If so, skip that step.
-		pngs = findFiles(imgDir, ".png")
+		pngs = findFiles(image_dir, ".png")
 		
 		if(length(pngs) > 0) {
 			cat("Image data already present.\n")
@@ -245,26 +246,26 @@ server = function(input, output, session) {
 			# Build the processing cluster and generate spectrograms
 			cl = makeCluster(ncores)
 			clusterEvalQ(cl, c(library(stringr), library(tuneR)))
-			clusterExport(cl=cl, varlist=c('makeImgs', 'imgDir', 'wavs', 'sox_path'), 
+			clusterExport(cl=cl, varlist=c('makeImgs', 'image_dir', 'wavs', 'sox_path'), 
 			              envir = environment())
-			parLapply(cl, wavs, makeImgs, outdir = imgDir, sox_path = sox_path)
+			parLapply(cl, wavs, makeImgs, output_dir = image_dir, sox_path = sox_path)
 			stopCluster(cl)
 			cat(sprintf("Finished at %s.\n", format(Sys.time(), "%X")))
 		}
 		cat("\nProceeding to CNN classification...\n")
 		
 		# Classify spectrograms, write predictions to output file
-		predictions <- CNN_proc(workDir, cnn_path, class_names, batchsize)
-		outfile <- file.path(targetDir, sprintf("CNN_Predictions_%s.csv", outname))
-		write_csv(predictions, outfile)
+		predictions <- makePredictions(target_dir, cnn_path)
+		output_file <- file.path(target_dir, sprintf("CNN_Predictions_%s.csv", outname))
+		write_csv(predictions, output_file)
 		
 		cat(sprintf("Finished at %s.\n", format(Sys.time(), "%X")))
-		cat(sprintf("Output written to %s in folder %s.\n", basename(outfile), targetDir))
+		cat(sprintf("Output written to %s in folder %s.\n", basename(output_file), target_dir))
 		
 		cat("\nSummarizing detections...\n")
 		det_table <- buildDetTable(predictions)
 		det_file_name <- sprintf("%s_detection_summary.csv", outname)
-		det_file_path <- file.path(targetDir, det_file_name)
+		det_file_path <- file.path(target_dir, det_file_name)
 		write_csv(det_table, det_file_path)
 		cat(sprintf("Detection summary written to file."))
 		
