@@ -9,6 +9,13 @@ library(shinyjs)
 library(tidyverse)
 library(tuneR)
 
+if(!file.exists("./settings")) { 
+  file.create("./settings") 
+  }
+
+custom_output_dir <- ""
+
+source("./settings")
 source("./functions.r")
 source_python("./scripts/pnw-cnet_v4_predict.py")
 
@@ -18,10 +25,6 @@ model_path = "./PNW-Cnet_v4_TF.h5"
 # Change the following line if you installed SoX in a different location.
 sox_dir = "C:/Program Files (x86)/sox-14-4-2"
 sox_path = file.path(sox_dir, "sox")
-
-# Size of batches of spectrogram images fed to the CNN. A larger batch size may
-# be slightly faster but will increase memory usage.
-batchsize = 16
 
 class_desc <- read_csv("./target_classes.csv", show_col_types = FALSE)
 class_list <- class_desc %>% 
@@ -45,7 +48,8 @@ ui = fluidPage(
 		    id = "controls",
 		    type = "hidden",
 		    tabPanelBody("inputControlPanel",
-      		textInput("topdir", h5("Copy and paste (recommended) or type target directory path into box and click Check Directory:")),
+      		textInput("topdir", h5("Copy and paste (recommended) or type target directory path into box and click Check Directory:"),
+      		          placeholder = "F:\\Path\\to\\directory"),
       		actionButton("checkdirbutton", label="Check Directory"),
       		br(),
       		h5("Click Process Files to generate spectrograms and use PNW-Cnet to predict class scores. This may take several hours. Please make sure all inputs are correct and that your computer will not go to sleep, shut down or restart during this process."),
@@ -58,7 +62,10 @@ ui = fluidPage(
       		actionButton("extractWavsButton", label = "Extract Review Clips", disabled = TRUE),
       		br(),
       		h5("Click Explore Detections to view apparent detections plotted over time by class and recording station."),
-      		actionButton("exploreDetsButton", label = "Explore Detections", disabled = TRUE)
+      		actionButton("exploreDetsButton", label = "Explore Detections", disabled = TRUE),
+      		br(),
+      		h5("Click Settings to configure the app's behavior."),
+      		actionButton("settingsButton", "Settings")
 		    ),
 		    
 		    tabPanelBody("exploreControlPanel",
@@ -77,7 +84,21 @@ ui = fluidPage(
 		                  choices = c("Weekly", "Daily")),
 		      
 		      actionButton("backButton", label = "Back to inputs"),
-		    )
+		    ),
+		    tabPanelBody("settingsControlPanel",
+		                 h4("Settings"),
+		                 textInput("customOutputDir",
+		                           h5("Choose the directory where spectrograms will be created. This folder will be created if it does not already exist. If left blank, spectrograms will be created in the directory containing your WAV files."),
+		                           placeholder = "F:\\Path\\to\\directory",
+		                           value=custom_output_dir),
+		                 actionButton("saveOutputDirButton",
+		                              label = "Save"),
+		                 actionButton("clearOutputDirButton",
+		                              label = "Clear"),
+
+		                 checkboxInput("splitSpectrogramGeneration", label="Split spectrograms across multiple folders for faster processing (recommended)", value=TRUE),
+		                 br(),
+		                 actionButton("settingsBackButton", label="Back to inputs"))
 		  )
   	),
 
@@ -93,18 +114,22 @@ ui = fluidPage(
       		h4(tagAppendAttributes(textOutput("wavsFound"), style = "white-space:pre-wrap;")),
       		fluidRow(column(12, div(tableOutput( {"showFiles"} ), 
       		                        style="height:500px;overflow-y:scroll"))),
-      		# br(),
-      		# fluidRow(column(12, div(tableOutput( {"detTable"} ),
-      		#                         style="height:500px;overflow-y:scroll")))
   	    ),
   	    tabPanelBody("exploreMainPanel",
   	                 plotOutput({ "detectionPlot" })
-  	    )
+  	    ),
+  	    tabPanelBody("settingsMainPanel",
+  	                 # This creates a list of check boxes with labels but is very
+  	                 # ugly and not super useful
+  	                 # checkboxGroupInput("selectClasses",
+  	                 #                    label=h4("Select classes"),
+  	                 #                    choices=setNames(seq(1, length(class_names)),
+  	                 #                                     class_names))
+  	                 )
   	  )
   	)
 	)
 )
-
 
 # Reactive functions or variables that respond to events within the interface go here.
 server = function(input, output, session) {
@@ -122,6 +147,17 @@ server = function(input, output, session) {
     updateTabsetPanel(inputId = "mainTabs", selected = "inputMainPanel")
   })
   
+  switchTabs3 <- observeEvent(input$settingsButton, {
+    updateTabsetPanel(inputId = "controls", selected = "settingsControlPanel")
+    updateTabsetPanel(inputId = "mainTabs", selected = "settingsMainPanel")
+  })
+  
+  # Change from Explore tab back to Input tab.
+  switchTabs4 <- observeEvent(input$settingsBackButton, {
+    updateTabsetPanel(inputId = "controls", selected = "inputControlPanel")
+    updateTabsetPanel(inputId = "mainTabs", selected = "inputMainPanel")
+  })
+  
   # Checks if the input directory exists
 	checkDir <- eventReactive(input$checkdirbutton, {
 		topdir = correctedDir()
@@ -131,7 +167,22 @@ server = function(input, output, session) {
 	# Replaces backslashes with forward slashes in input path for neatness.
 	correctedDir <- reactive({
 		orig = input$topdir
-		corrected = str_replace_all(orig, "\\\\", "/")
+		corrected = correctPath(orig)
+	})
+	
+	correctedOutputDir <- reactive({
+	  orig = input$customOutputDir
+	  corrected = correctPath(orig)
+	})
+	
+	clearCustomOutputDir <- observeEvent(input$clearOutputDirButton, {
+	  updateTextInput(session, "customOutputDir", value="")
+	})
+	
+	saveCustomOutputDir <- observeEvent(input$saveOutputDirButton, {
+	  output_dir <- correctedOutputDir()
+	  config_file_path <- "./settings"
+	  cat(sprintf('custom_output_dir="%s"', output_dir), file=config_file_path)
 	})
 	
 	# Set the state of various actionButtons when Check Directory is clicked, based
@@ -192,7 +243,7 @@ server = function(input, output, session) {
 	  n_wavs <- length(wavs)
 	  if(n_wavs == 0) {
 	    message <- "Directory tree contains no valid .wav files."
-	  } else {
+	    } else {
 	    durs <- sapply(wavs, getDuration)
 	    sizes <- sapply(wavs, file.size)
 	    total_dur <- sum(durs) / 3600
@@ -202,10 +253,10 @@ server = function(input, output, session) {
 	                     sprintf(" - Total duration: %.1f hours", total_dur),
 	                     sprintf(" - Total size: %.1f GB", total_size), 
 	                     sep = "\n")
-	  }
+	    }
 	  return( message )
 	})
-	
+
 	# Starts processing wav files when user hits the button.. The envir argument 
 	# to clusterExport is necessary when starting a cluster from inside a function, 
 	# otherwise it defaults to the global environment, where variables created 
@@ -221,53 +272,71 @@ server = function(input, output, session) {
 	    return()
 	  }
 
-		cnn_path = model_path
-		target_dir = correctedDir()
-
+		cnn_path <- model_path
+		target_dir <- correctedDir()
+    custom_output_dir <- correctedOutputDir()
+	  
+    # Check if the user entered a custom output directory for the spectrograms,
+	  # create it if necessary, and use this value for image_dir. On error, it will
+	  # use the default version.
+		if(custom_output_dir == "") {
+  		image_dir = file.path(target_dir, "Temp", "images")
+		} else { 
+  		  image_dir = makeOutputDir(target_dir, custom_output_dir) }
+		
+    if(!dir.exists(image_dir)) { dir.create(image_dir, recursive=TRUE) }
+    
+    # Try to split up spectrograms so there are no more than ~50,000 in a folder
+    split_spectro_gen <- input$splitSpectrogramGeneration
+    if( split_spectro_gen ) {
+      durs <- sapply(wavs, getDuration)
+      n_images <- sum(durs) / 12
+      n_parts <- floor(n_images / 50000)
+      spectro_dirs <- makeSpectroDirList(wavs, image_dir, n_parts)
+    } else { spectro_dirs <- rep(image_dir, length(wavs)) }
+    
 		comps = strsplit(basename(target_dir), "_")[[1]]
 		outname = if ( comps[1] == "Stn" ) {
 			paste(basename(dirname(target_dir)), comps[2], sep = "-") } else {
 			basename(target_dir) }
 
-		temp_dir = file.path(target_dir, "Temp")
-		image_dir = file.path(temp_dir, "images")
-		if (!dir.exists(temp_dir)) { 
-			dir.create(temp_dir) 
-			dir.create(image_dir) }
-
 		# Check if spectrograms have already been generated. If so, skip that step.
 		pngs = findFiles(image_dir, ".png")
-		
+
 		if(length(pngs) > 0) {
-			cat("Image data already present.\n")
+			cat(sprintf("\nImage data already present in %s.\n", image_dir))
 		} else {
-		  cat(sprintf("Using %d processors.\n", ncores))
-		  cat(sprintf("Generating spectrograms starting at %s... \n", format(Sys.time(), "%X")))
-			# Build the processing cluster and generate spectrograms
+		  cat(sprintf("\nUsing %d processors.\n", ncores))
+		  cat(sprintf("\nSpectrograms will be created in %s.\n", image_dir))
+		  cat(sprintf("\nGenerating spectrograms starting at %s... \n", format(Sys.time(), "%X")))
+			
+		  # Build the multiprocessing cluster
 			cl = makeCluster(ncores)
 			clusterEvalQ(cl, c(library(stringr), library(tuneR)))
-			clusterExport(cl=cl, varlist=c('makeImgs', 'image_dir', 'wavs', 'sox_path'), 
-			              envir = environment())
-			parLapply(cl, wavs, makeImgs, output_dir = image_dir, sox_path = sox_path)
+			clusterExport(cl = cl, varlist=c('makeImgs', 'image_dir', 'spectro_dirs',
+			                                 'wavs', 'sox_path'), envir = environment())
+			# Use the multiprocessing cluster to generate the spectrograms
+			clusterMap(cl, wavs, spectro_dirs, fun = makeImgs, sox_path = sox_path)
 			stopCluster(cl)
-			cat(sprintf("Finished at %s.\n", format(Sys.time(), "%X")))
+			cat(sprintf("\nFinished at %s.\n", format(Sys.time(), "%X")))
 		}
-		cat("\nProceeding to CNN classification...\n")
+		
+		cat(sprintf("\nProceeding to CNN classification at %s...\n", format(Sys.time(), "%X")))
 		
 		# Classify spectrograms, write predictions to output file
-		predictions <- makePredictions(target_dir, cnn_path)
+		predictions <- makePredictions(image_dir, cnn_path)
 		output_file <- file.path(target_dir, sprintf("CNN_Predictions_%s.csv", outname))
 		write_csv(predictions, output_file)
 		
-		cat(sprintf("Finished at %s.\n", format(Sys.time(), "%X")))
-		cat(sprintf("Output written to %s in folder %s.\n", basename(output_file), target_dir))
+		cat(sprintf("\nFinished at %s.\n", format(Sys.time(), "%X")))
+		cat(sprintf("\nOutput written to %s in folder %s.\n", basename(output_file), target_dir))
 		
 		cat("\nSummarizing detections...\n")
 		det_table <- buildDetTable(predictions)
 		det_file_name <- sprintf("%s_detection_summary.csv", outname)
 		det_file_path <- file.path(target_dir, det_file_name)
 		write_csv(det_table, det_file_path)
-		cat(sprintf("Detection summary written to file."))
+		cat(sprintf("\nDetection summary written to file.\n"))
 		
 		showModal(modalDialog(title = "Processing complete",
 		                      "Audio processing complete. CNN output written to file.",
@@ -277,7 +346,7 @@ server = function(input, output, session) {
 		toggleState(id = "processbutton", condition = TRUE)
 		click(id = "checkdirbutton")
 	})
-	
+
 	# Creates a review file based on the CNN results file in the folder specified.
 	mkReviewFile <- observeEvent(input$revExtButton, {
 	  in_dir = correctedDir()
@@ -312,7 +381,7 @@ server = function(input, output, session) {
 		  extractWavs(reviewFile, in_dir, sox_path)
 		}
 	})
-		
+	
 	# Not recursive; prediction file should be at the top level of the directory
 	getPredFile <- eventReactive(input$checkdirbutton, {
 		in_dir = correctedDir()
@@ -332,7 +401,7 @@ server = function(input, output, session) {
 			full.names=TRUE)
 		if(length(revFiles) >= 1) { revFiles[[1]] } else { "" }
 	})
-  
+
 	getSummaryFile <- eventReactive(input$checkdirbutton, {
 	  in_dir = correctedDir()
 	  summaryFiles <- list.files(path = in_dir, 
@@ -340,32 +409,36 @@ server = function(input, output, session) {
 	                            full.names=TRUE)
 	  if(length(summaryFiles) >= 1) { summaryFiles[[1]] } else { "" }
 	})
-	
+
 	detTable <- eventReactive(input$exploreDetsButton, {
 	  req(getSummaryFile())
     read_csv(getSummaryFile(), show_col_types = FALSE) %>% 
       mutate(Threshold = sprintf("%.2f", Threshold))
 	})
-	
+
+	customOutDir <- eventReactive(input$saveOutputDirButton, {
+	  output_dir <- correctedOutputDir()
+	})
+
 	foundDetTable <- observeEvent(input$exploreDetsButton, {
 	  req(getPredFile())
 	  summaryFile <- getSummaryFile()
 	  if(summaryFile == "") {
 	    predFile <- getPredFile()
-	    cat(sprintf("No summary file found. Generating detection summaries based on %s...\n", 
+	    cat(sprintf("\nNo summary file found. Generating detection summaries based on %s...\n", 
 	        basename(predFile)))
 	    preds <- read_csv(predFile, show_col_types = FALSE)
 	    dets <- buildDetTable(preds)
 	    outname <- predFile %>% str_replace("CNN_Predictions_", "") %>% 
 	      str_replace(".csv", "_detection_summary.csv")
 	    dets %>% write_csv(outname)
-	    cat("Summary file generated.\n")
+	    cat("\nSummary file generated.\n")
 	    click(id="checkdirbutton")
 	    updateTabsetPanel(inputId = "controls", selected = "exploreControlPanel")
 	    updateTabsetPanel(inputId = "mainTabs", selected = "exploreMainPanel")
 	  } else { }
 	})
-	
+
 	output$wavsFound <- renderText({
 		if (checkDir() == "invalid") { 
 			"Invalid directory." } else {
@@ -385,16 +458,17 @@ server = function(input, output, session) {
 	})
 
 	output$showFiles <- renderTable({
-		getWavs()
+		wavs <- getWavs()
+		makeWavTable(wavs, correctedDir())
 	})
-	
+
 	output$exploreTitle <- renderText({
 	  predfile <- getPredFile()
 	  if( predfile == "") { "" } else {
 	    sprintf("Exploring apparent detections from %s.", basename(predfile))
 	  }
 	})
-	
+
 	output$detectionPlot <- renderPlot({
 	  req(detTable())
 	  target_class <- str_split(input$class_selection, " - ")[[1]][1]
@@ -402,7 +476,7 @@ server = function(input, output, session) {
 	  timescale <- input$plot_timescale
 	  buildDetPlot(target_class, detTable(), thresh, timescale)
 	})
-	
+
 }
 
 

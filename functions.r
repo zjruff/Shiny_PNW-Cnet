@@ -1,4 +1,4 @@
-# Updated Aug 2022.
+# Updated Nov 2022.
 # Function definitions for the Shiny_PNW-Cnet app.
 
 # Extract short clips from longer wav files. Assumes clips are 12 s in length.
@@ -11,12 +11,15 @@ wavExtract <- function(src_file, dst_file, sox_path) {
 }
 
 # A function to generate spectrograms representing non-overlapping 12 s segments of
-# long audio files. Passed to a cluster of [ncores] worker processes via parLapply.
+# long audio files. Executed by a cluster of worker processes using clusterMap.
 makeImgs <- function(wav_path, output_dir, sox_path) {
-	params = readWave(wav_path, header=TRUE)
-	wav_length = params$samples / params$sample.rate
+  if(!dir.exists(output_dir)) { dir.create(output_dir, recursive=TRUE) }
+  
+  params = readWave(wav_path, header=TRUE)
+  wav_length = params$samples / params$sample.rate
 	n_clips = round(wav_length / 12, 0)
 	fname = basename(wav_path)
+	
 	for (i in seq(n_clips)) {
 		image_filename = sprintf("%s_part_%03d.png", str_sub(fname, 1, -5), i)
 		image_path = file.path(output_dir, image_filename)
@@ -25,6 +28,50 @@ makeImgs <- function(wav_path, output_dir, sox_path) {
 		sox_args = sprintf('-V1 "%s" -n trim %d %.3f remix 1 rate 8k spectrogram -x 1000 -y 257 -z 90 -m -r -o "%s"', wav_path, offs, duration, image_path)
 		system2(sox_path, sox_args)
 	}
+	return()
+}
+
+# Make a nicely formatted table showing the wavs found in the directory tree
+makeWavTable <- function(wav_list, top_dir) {
+  wav_table <- as.data.frame(wav_list) %>% 
+    rename(Path = wav_list) %>% 
+    mutate(Folder = getFolder(Path, top_dir),
+           File = basename(Path),
+           `Size (MB)` = sprintf("%.1f", file.size(Path) / 1024**2),
+           `Duration (s)` = sprintf("%.0f", getDuration(Path))) %>% 
+    select(-Path)
+  return(wav_table)
+}
+
+# Replace backslashes with forward slashes in user-supplied paths
+correctPath <- function(raw_path) {
+  corrected_path <- str_replace_all(raw_path, "\\\\", "/")
+  return(corrected_path)
+}
+
+# Make an output folder in output_dir with the same name as target_dir and 
+# containing the ./Temp/images structure we want. Return the path to the images
+# directory.
+makeOutputDir <- function(target_dir, output_dir) {
+  target_dir <- correctPath(target_dir)
+  output_dir <- correctPath(output_dir)
+  target_dir_name = basename(target_dir)
+  image_dir = file.path(output_dir, target_dir_name, "images")
+  return(image_dir)
+}
+
+# Make a list of output directories part_01, part_02, ..., part_n to break up
+# the spectrogram generation. Windows seems to have an easier time when folders 
+# don't contain hundreds of thousands of files.
+# Not quite optimal because wave files can vary in length. Would be better to try 
+# to equalize the number of *spectrograms* that wind up in each folder.
+makeSpectroDirList <- function(wav_list, out_dir, n_chunks) {
+  chunk_size <- floor(length(wav_list) / n_chunks) + 1
+  out_dirs <- sapply(seq_along(wav_list),
+                     function(i) file.path(out_dir,
+                                           sprintf("part_%02d", 
+                                                   (floor(i / chunk_size) + 1))))
+  return(out_dirs)
 }
 
 # Function to get the rec date from properly structured filenames.
@@ -94,12 +141,12 @@ getFolder <- Vectorize(function(file_path, in_dir) {
 })
 
 # Return the duration of a .wav file in seconds, or 0 if it cannot be read.
-getDuration <- function(path) {
+getDuration <- Vectorize(function(path) {
   wav_length <-tryCatch( { 
     params <- suppressWarnings(readWave(path, header = TRUE))
     params$samples / params$sample.rate
   }, error = function(cond) { 0 } )
-}
+})
 
 # Function to read an existing CNN prediction file and output a "review" file
 # listing the clips that need to be validated. Optionally, can create a review 
