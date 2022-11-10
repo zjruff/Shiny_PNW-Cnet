@@ -10,16 +10,16 @@ library(tidyverse)
 library(tuneR)
 
 if(!file.exists("./settings")) { 
-  file.create("./settings") 
+  cat('custom_output_dir=""\n' , file="./settings")
   }
-
-custom_output_dir <- ""
 
 source("./settings")
 source("./functions.r")
 source_python("./scripts/pnw-cnet_v4_predict.py")
 
-ncores = detectCores(logical = FALSE)
+# ncores = detectCores(logical = FALSE)
+ncores = detectCores()
+
 model_path = "./PNW-Cnet_v4_TF.h5"
 
 # Change the following line if you installed SoX in a different location.
@@ -32,16 +32,16 @@ class_list <- class_desc %>%
   pull(Str_Class)
 class_names <- class_desc %>% pull(Class)
 
-
 ui = fluidPage(
 	useShinyjs(),
 	
 	titlePanel("Neural net processing for audio data"),
 
-	# Tabset panel allows switching between two modes: Input, in which the user
-	# can designate a target directory and run the neural network, and Explore,
-	# in which the user can examine detections from a CNN prediction file plotted
-	# by class, day/week, station, and detection threshold. 
+	# Tabset panel allows switching between several modes: Input, where the user
+	# can designate a target directory and carry out processing tasks; Explore,
+	# where the user can examine detections from a CNN prediction file plotted
+	# by class, day/week, station, and detection threshold; and Settings, where
+	# the user can customize various aspects of the app's behavior.
 	sidebarLayout(
 		sidebarPanel(
 		  tabsetPanel(
@@ -95,9 +95,17 @@ ui = fluidPage(
 		                              label = "Save"),
 		                 actionButton("clearOutputDirButton",
 		                              label = "Clear"),
-
-		                 checkboxInput("splitSpectrogramGeneration", label="Split spectrograms across multiple folders for faster processing (recommended)", value=TRUE),
+		                 
+		                 # numericInput("useCores", label=h5("Number of cores to use for spectrogram generation: "),
+		                 #              min=1, max=ncores, value=ncores),
+		                 
+		                 selectInput("useCores", label=h5("Number of cores to use for spectrogram generation: "),
+		                             choices=rev(seq(1, ncores)), selected=ncores), 
+		                 
+		                 checkboxInput("splitSpectrogramGeneration", label="Spread spectrogram generation across multiple folders (recommended)", value=TRUE),
+		                 
 		                 br(),
+		                 
 		                 actionButton("settingsBackButton", label="Back to inputs"))
 		  )
   	),
@@ -118,14 +126,7 @@ ui = fluidPage(
   	    tabPanelBody("exploreMainPanel",
   	                 plotOutput({ "detectionPlot" })
   	    ),
-  	    tabPanelBody("settingsMainPanel",
-  	                 # This creates a list of check boxes with labels but is very
-  	                 # ugly and not super useful
-  	                 # checkboxGroupInput("selectClasses",
-  	                 #                    label=h4("Select classes"),
-  	                 #                    choices=setNames(seq(1, length(class_names)),
-  	                 #                                     class_names))
-  	                 )
+  	    tabPanelBody("settingsMainPanel", )
   	  )
   	)
 	)
@@ -182,12 +183,14 @@ server = function(input, output, session) {
 	saveCustomOutputDir <- observeEvent(input$saveOutputDirButton, {
 	  output_dir <- correctedOutputDir()
 	  config_file_path <- "./settings"
-	  cat(sprintf('custom_output_dir="%s"', output_dir), file=config_file_path)
+	  cat(sprintf('custom_output_dir="%s"\n', output_dir), file=config_file_path)
 	})
 	
 	# Set the state of various actionButtons when Check Directory is clicked, based
 	# on files that were or were not found in the target directory.
 	updateButtons <- observeEvent(input$checkdirbutton, {
+	  toggleState(id = "checkdirbutton", condition = TRUE)
+	  toggleState(id = "settingsButton", condition = TRUE)
 	  wavs <- listWavs()
 	  predfile <- getPredFile()
 	  revfile <- getRevFile()
@@ -263,6 +266,8 @@ server = function(input, output, session) {
 	# inside the function don't exist.
 	processWavs <- observeEvent(input$processbutton, {
 	  toggleState(id = "processbutton", condition = FALSE)
+	  toggleState(id = "checkdirbutton", condition = FALSE)
+	  toggleState(id = "settingsButton", condition = FALSE)
 	  
 	  wavs = listWavs()
 	  
@@ -303,15 +308,17 @@ server = function(input, output, session) {
 		# Check if spectrograms have already been generated. If so, skip that step.
 		pngs = findFiles(image_dir, ".png")
 
+		use_cores <- as.integer(input$useCores)
+		
 		if(length(pngs) > 0) {
 			cat(sprintf("\nImage data already present in %s.\n", image_dir))
 		} else {
-		  cat(sprintf("\nUsing %d processors.\n", ncores))
+		  cat(sprintf("\nUsing %d processors.\n", use_cores))
 		  cat(sprintf("\nSpectrograms will be created in %s.\n", image_dir))
 		  cat(sprintf("\nGenerating spectrograms starting at %s... \n", format(Sys.time(), "%X")))
 			
 		  # Build the multiprocessing cluster
-			cl = makeCluster(ncores)
+			cl = makeCluster(use_cores)
 			clusterEvalQ(cl, c(library(stringr), library(tuneR)))
 			clusterExport(cl = cl, varlist=c('makeImgs', 'image_dir', 'spectro_dirs',
 			                                 'wavs', 'sox_path'), envir = environment())
@@ -343,7 +350,8 @@ server = function(input, output, session) {
 		                      size = "s",
 		                      footer = modalButton("Dismiss"),
 		                      easyClose = TRUE))
-		toggleState(id = "processbutton", condition = TRUE)
+
+		toggleState(id = "checkdirbutton", condition = TRUE)
 		click(id = "checkdirbutton")
 	})
 
@@ -415,10 +423,10 @@ server = function(input, output, session) {
     read_csv(getSummaryFile(), show_col_types = FALSE) %>% 
       mutate(Threshold = sprintf("%.2f", Threshold))
 	})
-
-	customOutDir <- eventReactive(input$saveOutputDirButton, {
-	  output_dir <- correctedOutputDir()
-	})
+# 
+# 	customOutDir <- eventReactive(input$saveOutputDirButton, {
+# 	  output_dir <- correctedOutputDir()
+# 	})
 
 	foundDetTable <- observeEvent(input$exploreDetsButton, {
 	  req(getPredFile())
