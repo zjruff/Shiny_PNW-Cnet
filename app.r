@@ -17,8 +17,8 @@ source("./settings")
 source("./functions.r")
 source_python("./scripts/pnw-cnet_v4_predict.py")
 
-# ncores = detectCores(logical = FALSE)
-ncores = detectCores()
+ncores_logical = detectCores()
+ncores_physical = detectCores(logical = FALSE)
 
 model_path = "./PNW-Cnet_v4_TF.h5"
 
@@ -96,15 +96,13 @@ ui = fluidPage(
 		                 actionButton("clearOutputDirButton",
 		                              label = "Clear"),
 		                 
-		                 # numericInput("useCores", label=h5("Number of cores to use for spectrogram generation: "),
-		                 #              min=1, max=ncores, value=ncores),
-		                 
-		                 selectInput("useCores", label=h5("Number of cores to use for spectrogram generation: "),
-		                             choices=rev(seq(1, ncores)), selected=ncores), 
-		                 
-		                 checkboxInput("splitSpectrogramGeneration", label="Spread spectrogram generation across multiple folders (recommended)", value=TRUE),
-		                 
 		                 br(),
+		                 
+		                 uiOutput("use_nCores"),
+		                 
+						         checkboxInput("useLogicalCores", label = "Use physical cores only (recommended)", value = TRUE),
+						 
+		                 checkboxInput("splitSpectrogramGeneration", label="Spread spectrogram generation across multiple folders (recommended)", value=TRUE),
 		                 
 		                 actionButton("settingsBackButton", label="Back to inputs"))
 		  )
@@ -483,6 +481,18 @@ server = function(input, output, session) {
 	  thresh <- input$plot_threshold
 	  timescale <- input$plot_timescale
 	  buildDetPlot(target_class, detTable(), thresh, timescale)
+	})
+	
+	# Define number of available cores
+	output$use_nCores <- renderUI({
+	  if(input$useLogicalCores) {
+	    available_cores <- ncores_physical
+	  } else { available_cores <- ncores_logical 
+	  }
+	  selectInput("useCores",
+	              label=h5("Number of cores to use for spectrogram generation:"),
+	              choices = rev(seq(1, available_cores)), 
+	              selected=available_cores)
 	})
 
 }
