@@ -86,21 +86,23 @@ ui = fluidPage(
 		      actionButton("backButton", label = "Back to inputs"),
 		    ),
 		    tabPanelBody("settingsControlPanel",
-		                 h4("Settings"),
+
+		                 h4("Image directory"),
 		                 textInput("customOutputDir",
-		                           h5("Choose the directory where spectrograms will be created. This folder will be created if it does not already exist. If left blank, spectrograms will be created in the directory containing your WAV files."),
+		                           h5("Choose the directory where spectrograms will be created. This folder will be created if it does not already exist. If left blank, spectrograms will be created in a folder called Temp in the directory containing your WAV files."),
 		                           placeholder = "F:\\Path\\to\\directory",
 		                           value=custom_output_dir),
 		                 actionButton("saveOutputDirButton",
 		                              label = "Save"),
 		                 actionButton("clearOutputDirButton",
 		                              label = "Clear"),
-		                 
-		                 br(),
-		                 
+		                 h5("_______________________________"),
+		                 h4("Multiprocessing"),
 		                 uiOutput("use_nCores"),
 		                 
-						         checkboxInput("useLogicalCores", label = "Use physical cores only (recommended)", value = TRUE),
+		                 h5("Using more cores is generally faster, but note that processing speed may be limited by other factors, e.g. disk read / write speeds."),
+		                 
+						         checkboxInput("useLogicalCores", label = "Use hyperthreading (increases available cores)", value = TRUE),
 						 
 		                 checkboxInput("splitSpectrogramGeneration", label="Spread spectrogram generation across multiple folders (recommended)", value=TRUE),
 		                 
@@ -258,11 +260,12 @@ server = function(input, output, session) {
 	  return( message )
 	})
 
-	# Starts processing wav files when user hits the button.. The envir argument 
-	# to clusterExport is necessary when starting a cluster from inside a function, 
-	# otherwise it defaults to the global environment, where variables created 
-	# inside the function don't exist.
+	# Starts processing wav files when user hits the button. Generates spectrograms
+	# representing non-overlapping 12-s segments of audio in the frequency range
+	# 0 - 4000 Hz, then uses the trained PNW-Cnet model to generate class scores for
+	# 51 target classes for each image.
 	processWavs <- observeEvent(input$processbutton, {
+	  # Disable other controls while processing
 	  toggleState(id = "processbutton", condition = FALSE)
 	  toggleState(id = "checkdirbutton", condition = FALSE)
 	  toggleState(id = "settingsButton", condition = FALSE)
@@ -271,11 +274,13 @@ server = function(input, output, session) {
 	  
 	  if(length(wavs) == 0) {
       cat("\nNo .wav files available to process.\n")
-	    toggleState(id = "processbutton", condition = TRUE)
+	    # toggleState(id = "processbutton", condition = TRUE)
 	    return()
 	  }
-
-		cnn_path <- model_path
+    
+	  total_duration <- sum(sapply(wavs, getDuration)) / 3600
+		
+    cnn_path <- model_path
 		target_dir <- correctedDir()
     custom_output_dir <- correctedOutputDir()
 	  
@@ -292,8 +297,7 @@ server = function(input, output, session) {
     # Try to split up spectrograms so there are no more than ~50,000 in a folder
     split_spectro_gen <- input$splitSpectrogramGeneration
     if( split_spectro_gen ) {
-      durs <- sapply(wavs, getDuration)
-      n_images <- sum(durs) / 12
+      n_images <- total_duration * 300
       n_parts <- floor(n_images / 50000)
       spectro_dirs <- makeSpectroDirList(wavs, image_dir, n_parts)
     } else { spectro_dirs <- rep(image_dir, length(wavs)) }
@@ -308,12 +312,15 @@ server = function(input, output, session) {
 
 		use_cores <- as.integer(input$useCores)
 		
+		spectro_start_time <- Sys.time()
+		
 		if(length(pngs) > 0) {
 			cat(sprintf("\nImage data already present in %s.\n", image_dir))
 		} else {
-		  cat(sprintf("\nUsing %d processors.\n", use_cores))
+		  cat(sprintf("\nUsing %d cores for spectrogram generation.\n", use_cores))
 		  cat(sprintf("\nSpectrograms will be created in %s.\n", image_dir))
-		  cat(sprintf("\nGenerating spectrograms starting at %s... \n", format(Sys.time(), "%X")))
+		  cat(sprintf("\nGenerating spectrograms starting at %s... \n", 
+		              format(spectro_start_time, "%X")))
 			
 		  # Build the multiprocessing cluster
 			cl = makeCluster(use_cores)
@@ -323,18 +330,25 @@ server = function(input, output, session) {
 			# Use the multiprocessing cluster to generate the spectrograms
 			clusterMap(cl, wavs, spectro_dirs, fun = makeImgs, sox_path = sox_path)
 			stopCluster(cl)
-			cat(sprintf("\nFinished at %s.\n", format(Sys.time(), "%X")))
+			spectro_end_time <- Sys.time()
+			cat(sprintf("\nFinished at %s.\n", format(spectro_end_time, "%X")))
 		}
 		
-		cat(sprintf("\nProceeding to CNN classification at %s...\n", format(Sys.time(), "%X")))
+		predict_start_time <- Sys.time()
+		
+		cat(sprintf("\nProceeding to CNN classification at %s...\n", 
+		            format(predict_start_time, "%X")))
 		
 		# Classify spectrograms, write predictions to output file
 		predictions <- makePredictions(image_dir, cnn_path)
 		output_file <- file.path(target_dir, sprintf("CNN_Predictions_%s.csv", outname))
 		write_csv(predictions, output_file)
 		
-		cat(sprintf("\nFinished at %s.\n", format(Sys.time(), "%X")))
-		cat(sprintf("\nOutput written to %s in folder %s.\n", basename(output_file), target_dir))
+		predict_end_time <- Sys.time()
+		
+		cat(sprintf("\nFinished at %s.\n", 
+		            format(predict_end_time, "%X")))
+		cat(sprintf("\nClass scores written to %s in folder %s.\n", basename(output_file), target_dir))
 		
 		cat("\nSummarizing detections...\n")
 		det_table <- buildDetTable(predictions)
@@ -342,6 +356,12 @@ server = function(input, output, session) {
 		det_file_path <- file.path(target_dir, det_file_name)
 		write_csv(det_table, det_file_path)
 		cat(sprintf("\nDetection summary written to file.\n"))
+		
+		run_time <- as.numeric(predict_end_time - spectro_start_time, units="hours")
+		total_duration_pretty <- total_duration %>% round(digits=1) %>% format(big.mark=",")
+		
+		cat(sprintf("\n%s h of data processed in %.1f h (ratio: %.1f).\n",
+		            total_duration_pretty, run_time, total_duration / run_time))
 		
 		showModal(modalDialog(title = "Processing complete",
 		                      "Audio processing complete. CNN output written to file.",
@@ -421,10 +441,6 @@ server = function(input, output, session) {
     read_csv(getSummaryFile(), show_col_types = FALSE) %>% 
       mutate(Threshold = sprintf("%.2f", Threshold))
 	})
-# 
-# 	customOutDir <- eventReactive(input$saveOutputDirButton, {
-# 	  output_dir <- correctedOutputDir()
-# 	})
 
 	foundDetTable <- observeEvent(input$exploreDetsButton, {
 	  req(getPredFile())
@@ -486,8 +502,8 @@ server = function(input, output, session) {
 	# Define number of available cores
 	output$use_nCores <- renderUI({
 	  if(input$useLogicalCores) {
-	    available_cores <- ncores_physical
-	  } else { available_cores <- ncores_logical 
+	    available_cores <- ncores_logical
+	  } else { available_cores <- ncores_physical 
 	  }
 	  selectInput("useCores",
 	              label=h5("Number of cores to use for spectrogram generation:"),
