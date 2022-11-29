@@ -86,27 +86,39 @@ ui = fluidPage(
 		      actionButton("backButton", label = "Back to inputs"),
 		    ),
 		    tabPanelBody("settingsControlPanel",
-
+                     h3("Settings"),
+		                 h5("_______________________________"),
 		                 h4("Image directory"),
 		                 textInput("customOutputDir",
-		                           h5("Choose the directory where spectrograms will be created. This folder will be created if it does not already exist. If left blank, spectrograms will be created in a folder called Temp in the directory containing your WAV files."),
+		                           h5("Choose the directory where spectrograms will be created. This folder will be created if it does not already exist. If left blank, spectrograms will be created in a folder called Temp in the directory containing your audio data."),
 		                           placeholder = "F:\\Path\\to\\directory",
 		                           value=custom_output_dir),
 		                 actionButton("saveOutputDirButton",
 		                              label = "Save"),
 		                 actionButton("clearOutputDirButton",
 		                              label = "Clear"),
+		                 checkboxInput("splitSpectrogramGeneration", label="Split image directory into subfolders for large datasets (recommended)", value=TRUE),
+		                 
 		                 h5("_______________________________"),
+		                 
 		                 h4("Multiprocessing"),
+		                 
 		                 uiOutput("use_nCores"),
 		                 
-		                 h5("Using more cores is generally faster, but note that processing speed may be limited by other factors, e.g. disk read / write speeds."),
-		                 
-						         checkboxInput("useLogicalCores", label = "Use hyperthreading (increases available cores)", value = TRUE),
-						 
-		                 checkboxInput("splitSpectrogramGeneration", label="Spread spectrogram generation across multiple folders (recommended)", value=TRUE),
-		                 
-		                 actionButton("settingsBackButton", label="Back to inputs"))
+						         checkboxInput("useLogicalCores", label = "Count logical cores (enables more nodes)", value = TRUE),
+						         h5("Note: Using more nodes is generally faster, but processing speed may be limited by other factors such as disk read/write speeds."),
+						         
+						         h5("_______________________________"),
+						         h4("Standardize filenames"),
+						         h5("Rename files to match the filename format expected by the app. Click Preview Changes to show how filenames will be changed, then click Rename Files to execute the changes. Changes will be recorded in a file in the target directory called Rename_Log. This file can also be used to reverse the changes."),
+						         actionButton("showPreviewButton", label="Preview Changes",
+						                      disabled=TRUE),
+						         actionButton("hidePreviewButton", label="Hide Preview",
+						                      disabled=TRUE),
+						         uiOutput("renameButton"),
+						         br(),
+						         
+						         actionButton("settingsBackButton", label="Back to inputs"))
 		  )
   	),
 
@@ -120,13 +132,17 @@ ui = fluidPage(
       		h4(textOutput({"revFilesFound"})),
       		br(),
       		h4(tagAppendAttributes(textOutput("wavsFound"), style = "white-space:pre-wrap;")),
-      		fluidRow(column(12, div(tableOutput( {"showFiles"} ), 
+      		fluidRow(column(12, div(tableOutput( {"showFiles"} ),
       		                        style="height:500px;overflow-y:scroll"))),
   	    ),
   	    tabPanelBody("exploreMainPanel",
-  	                 plotOutput({ "detectionPlot" })
+  	                 plotOutput({ "detectionPlot" }),
   	    ),
-  	    tabPanelBody("settingsMainPanel", )
+  	    tabPanelBody("settingsMainPanel",
+  	                 h4(textOutput({"renamePreviewSummary"})),
+  	                 fluidRow(column(12, div(tableOutput( {"renamePreviewTable"} ),
+  	                                         style="height:500px;overflow-y:scroll"))))
+
   	  )
   	)
 	)
@@ -134,6 +150,8 @@ ui = fluidPage(
 
 # Reactive functions or variables that respond to events within the interface go here.
 server = function(input, output, session) {
+  rv <- reactiveValues()
+  rv$show_rename_preview_table <- FALSE
   
   # Change from Input tab to Explore tab.
   switchTabs1 <- observeEvent(input$exploreDetsButton, {
@@ -176,6 +194,16 @@ server = function(input, output, session) {
 	  corrected = correctPath(orig)
 	})
 	
+	renameLogFile <- eventReactive(input$checkdirbutton, {
+	  top_dir <- correctedDir()
+	  log_path <- file.path(top_dir, "Rename_Log.csv")
+	  if(file.exists(log_path)) {
+	    return(log_path)
+	  } else {
+	    return("")
+	  }
+	})
+	
 	clearCustomOutputDir <- observeEvent(input$clearOutputDirButton, {
 	  updateTextInput(session, "customOutputDir", value="")
 	})
@@ -196,6 +224,8 @@ server = function(input, output, session) {
 	  revfile <- getRevFile()
 	  if ( length(wavs) > 0 ) {
 	    toggleState(id = "processbutton", condition = TRUE)
+	    toggleState(id = "previewRenameButton", condition=TRUE)
+	    toggleState(id = "showPreviewButton", condition=TRUE)
 	  } else { toggleState(id = "processbutton", condition = FALSE) }
 	  
 	  if (predfile != "") {
@@ -213,6 +243,20 @@ server = function(input, output, session) {
 	  if (revfile != "") {
 	    toggleState(id = "extractWavsButton", condition = TRUE)} else {
 	      toggleState(id = "extractWavsButton", condition = FALSE) }
+	})
+	
+	showPreviewTable <- observeEvent(input$showPreviewButton, {
+	  rv$show_rename_preview_table <- TRUE
+	  toggleState(id="showPreviewButton", condition=FALSE)
+	  toggleState(id="hidePreviewButton", condition=TRUE)
+	  toggleState(id="renameFilesButton", condition=TRUE)
+	})
+	
+	hidePreviewTable <- observeEvent(input$hidePreviewButton, {
+	  rv$show_rename_preview_table <- FALSE
+	  toggleState(id="hidePreviewButton", condition=FALSE)
+	  toggleState(id="showPreviewButton", condition=TRUE)
+	  toggleState(id="renameFilesButton", condition=FALSE)
 	})
 	
 	# The list of all .wav files in the target directory, including subdirectories.
@@ -259,7 +303,7 @@ server = function(input, output, session) {
 	    }
 	  return( message )
 	})
-
+	
 	# Starts processing wav files when user hits the button. Generates spectrograms
 	# representing non-overlapping 12-s segments of audio in the frequency range
 	# 0 - 4000 Hz, then uses the trained PNW-Cnet model to generate class scores for
@@ -270,7 +314,7 @@ server = function(input, output, session) {
 	  toggleState(id = "checkdirbutton", condition = FALSE)
 	  toggleState(id = "settingsButton", condition = FALSE)
 	  
-	  wavs = listWavs()
+	  wavs <- listWavs()
 	  
 	  if(length(wavs) == 0) {
       cat("\nNo .wav files available to process.\n")
@@ -302,13 +346,10 @@ server = function(input, output, session) {
       spectro_dirs <- makeSpectroDirList(wavs, image_dir, n_parts)
     } else { spectro_dirs <- rep(image_dir, length(wavs)) }
     
-		comps = strsplit(basename(target_dir), "_")[[1]]
-		outname = if ( comps[1] == "Stn" ) {
-			paste(basename(dirname(target_dir)), comps[2], sep = "-") } else {
-			basename(target_dir) }
+		outname <- getSiteName(target_dir)
 
 		# Check if spectrograms have already been generated. If so, skip that step.
-		pngs = findFiles(image_dir, ".png")
+		pngs <- findFiles(image_dir, ".png")
 
 		use_cores <- as.integer(input$useCores)
 		
@@ -317,10 +358,9 @@ server = function(input, output, session) {
 		if(length(pngs) > 0) {
 			cat(sprintf("\nImage data already present in %s.\n", image_dir))
 		} else {
-		  cat(sprintf("\nUsing %d cores for spectrogram generation.\n", use_cores))
 		  cat(sprintf("\nSpectrograms will be created in %s.\n", image_dir))
-		  cat(sprintf("\nGenerating spectrograms starting at %s... \n", 
-		              format(spectro_start_time, "%X")))
+		  cat(sprintf("\nGenerating spectrograms using %d nodes starting at %s... \n", 
+		              use_cores, format(spectro_start_time, "%X")))
 			
 		  # Build the multiprocessing cluster
 			cl = makeCluster(use_cores)
@@ -340,7 +380,10 @@ server = function(input, output, session) {
 		            format(predict_start_time, "%X")))
 		
 		# Classify spectrograms, write predictions to output file
-		predictions <- makePredictions(image_dir, cnn_path)
+		predictions <- makePredictions(image_dir, cnn_path) %>% 
+		  mutate(across(AEAC:ZEMA, function(x) 
+		    round(x, digits=5)))
+		
 		output_file <- file.path(target_dir, sprintf("CNN_Predictions_%s.csv", outname))
 		write_csv(predictions, output_file)
 		
@@ -360,12 +403,12 @@ server = function(input, output, session) {
 		run_time <- as.numeric(predict_end_time - spectro_start_time, units="hours")
 		total_duration_pretty <- total_duration %>% round(digits=1) %>% format(big.mark=",")
 		
-		cat(sprintf("\n%s h of data processed in %.1f h (ratio: %.1f).\n",
+		cat(sprintf("\nSuccessfully processed %s hours of data in %.1f hours (ratio: %.1f).\n",
 		            total_duration_pretty, run_time, total_duration / run_time))
 		
 		showModal(modalDialog(title = "Processing complete",
-		                      "Audio processing complete. CNN output written to file.",
-		                      size = "s",
+		                      "Audio processing complete. Class scores written to file.",
+		                      size = "m",
 		                      footer = modalButton("Dismiss"),
 		                      easyClose = TRUE))
 
@@ -396,7 +439,6 @@ server = function(input, output, session) {
 
 	# Extracts wav files based on review file.
 	extractWavFiles <- observeEvent(input$extractWavsButton, {
-		# req(getWavs())
 	  in_dir = correctedDir()
 		reviewFile = getRevFile()
 		if (reviewFile == "") {
@@ -410,30 +452,36 @@ server = function(input, output, session) {
 	
 	# Not recursive; prediction file should be at the top level of the directory
 	getPredFile <- eventReactive(input$checkdirbutton, {
-		in_dir = correctedDir()
-		predFiles = list.files(path = in_dir,
-		                       pattern="CNN_[Pp]+redictions_[[:alnum:][:punct:]]+.csv", 
-		                       full.names=TRUE)
-		if(length(predFiles) >= 1) { 
-		  return(predFiles[[1]]) 
-		  } else { 
-		    return("") 
-		  }
+		target_dir <- correctedDir()
+		site_name <- getSiteName(target_dir)
+		pred_file_path <- file.path(target_dir, sprintf("CNN_Predictions_%s.csv", site_name))
+		if(file.exists(pred_file_path)) {
+		  return( pred_file_path )
+		} else {
+		  return( "" )
+		}
 	})
 
 	getRevFile <- eventReactive(input$checkdirbutton, {
-		in_dir = correctedDir()
-		revFiles = list.files(path = in_dir, pattern="[[:alnum:][:punct:]]+review.csv",
-			full.names=TRUE)
-		if(length(revFiles) >= 1) { revFiles[[1]] } else { "" }
+	  target_dir <- correctedDir()
+	  site_name <- getSiteName(target_dir)
+	  review_file_path <- file.path(target_dir, sprintf("%s_review.csv", site_name))
+	  if(file.exists(review_file_path)) {
+	    return( review_file_path )
+	  } else {
+	    return( "" )
+	  }
 	})
 
 	getSummaryFile <- eventReactive(input$checkdirbutton, {
-	  in_dir = correctedDir()
-	  summaryFiles <- list.files(path = in_dir, 
-	                            pattern = "[[:alnum:][:punct:]]+_detection_summary.csv",
-	                            full.names=TRUE)
-	  if(length(summaryFiles) >= 1) { summaryFiles[[1]] } else { "" }
+	  target_dir <- correctedDir()
+	  site_name <- getSiteName(target_dir)
+	  summary_file_path <- file.path(target_dir, sprintf("%s_detection_summary.csv", site_name))
+	  if(file.exists(summary_file_path)) {
+	    return( summary_file_path )
+	  } else {
+	    return( "" )
+	  }
 	})
 
 	detTable <- eventReactive(input$exploreDetsButton, {
@@ -481,9 +529,61 @@ server = function(input, output, session) {
 
 	output$showFiles <- renderTable({
 		wavs <- getWavs()
-		makeWavTable(wavs, correctedDir())
+		if(length(wavs) == 0) {
+		  return()
+		} else {
+  		makeWavTable(wavs, correctedDir())
+		}
+	})
+	
+	# Make a table showing where filenames are not currently standardized
+	previewTable <- eventReactive(input$checkdirbutton, {
+	  wavs <- getWavs()
+	  input_dir <- correctedDir()
+	  if(length(wavs) == 0) {
+	    return()
+	  } else {
+	    log_path <- renameLogFile()
+	    if(!log_path=="") {
+	      previewTable <- read_csv(log_path, show_col_types = FALSE) %>% 
+	        mutate(Change = ifelse(Former == New, "No", "Yes"))
+	    } else {
+	      previewTable <- makeRenamePreviewTable(wavs, input_dir)
+	    }
+	  }
+	})
+	
+	previewSummary <- eventReactive(input$showPreviewButton, {
+	  preview_table <- previewTable()
+	  if(nrow(preview_table) == 0) {
+	    return("")
+	  } else {
+        n_changes <- preview_table %>% filter(Change == "Yes") %>% nrow()
+	      return(sprintf("%d files will be renamed.", n_changes))
+	  }
+	})
+	
+	output$renamePreviewTable <- renderTable({
+    if(rv$show_rename_preview_table) {
+  	  preview_table <- previewTable()
+    } else {  }
 	})
 
+	output$renamePreviewSummary <- renderText({
+	  if(rv$show_rename_preview_table) {
+  	  summary <- previewSummary()
+	  } else {  }
+	})
+	
+	renameWaveFiles <- observeEvent(input$renameFilesButton, {
+	  preview_table <- previewTable()
+	  top_dir <- correctedDir()
+	  click(id = "hidePreviewButton")
+	  renameFiles(preview_table, top_dir)
+	  click(id = "checkdirbutton")
+	  click(id = "settingsBackButton")
+  })
+	
 	output$exploreTitle <- renderText({
 	  predfile <- getPredFile()
 	  if( predfile == "") { "" } else {
@@ -506,9 +606,22 @@ server = function(input, output, session) {
 	  } else { available_cores <- ncores_physical 
 	  }
 	  selectInput("useCores",
-	              label=h5("Number of cores to use for spectrogram generation:"),
-	              choices = rev(seq(1, available_cores)), 
+	              label=h5("Number of processing nodes to use for spectrogram generation:"),
+	              choices = rev(seq(1, available_cores)),
 	              selected=available_cores)
+	})
+
+	output$renameButton <- renderUI({
+	  preview_table <- previewTable()
+	  if("Current" %in% names(preview_table)) {
+	    actionButton("renameFilesButton",
+	                 label="Rename Files",
+	                 disabled=TRUE)
+	  } else {
+	    actionButton("renameFilesButton",
+	                 label="Undo Renaming",
+	                 disabled=TRUE)
+	  }
 	})
 
 }

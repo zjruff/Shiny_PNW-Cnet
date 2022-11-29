@@ -43,7 +43,75 @@ makeWavTable <- function(wav_list, top_dir) {
   return(wav_table)
 }
 
-# Replace backslashes with forward slashes in user-supplied paths
+# Show the results of renaming files using the RenameWavFiles script
+makeRenamePreviewTable <- function(wav_list, top_dir) {
+  wav_table <- as.data.frame(wav_list) %>% 
+    rename(Path = wav_list) %>% 
+    mutate(Folder = getFolder(Path, top_dir), 
+           Current = basename(Path),  
+           New = fixFilename(Path),
+           Change = ifelse(Current == New, "No", "Yes") ) %>% 
+    select(-Path)
+  return(wav_table)
+}
+
+renameFiles <- function(preview_table, top_dir) {
+  log_path <- file.path(top_dir, "Rename_Log.csv")
+  n_change <- preview_table %>% filter(Change == "Yes") %>% nrow()
+  n_total <- preview_table %>% nrow()
+  
+  if("Current" %in% names(preview_table)) {
+    cat(sprintf("\nRenaming files. %d of %d filenames will be changed.\n",
+                n_change, n_total))
+    preview_table <- preview_table %>%
+      mutate(In_Dir = file.path(top_dir, Folder),
+             Current_Path = file.path(In_Dir, Current),
+             New_Path = file.path(In_Dir, New))
+    mapply(file.rename,
+           preview_table$Current_Path,
+           preview_table$New_Path)
+    cat(sprintf("Filenames changed. Changes written to %s.\n", log_path))
+    preview_table %>%
+      select(Folder, Current, New) %>%
+      rename(Former = Current) %>% 
+      write_csv(file = log_path)
+    } else {
+        cat(sprintf("\nUndoing previous renaming operation. %d of %d filenames will be changed.\n",
+                    n_change, n_total))
+        preview_table <- preview_table %>%
+          mutate(In_Dir = file.path(top_dir, Folder),
+                 Current_Path = file.path(In_Dir, New),
+                 Old_Path = file.path(In_Dir, Former))
+        mapply(file.rename,
+               preview_table$Current_Path,
+               preview_table$Old_Path)
+        file.remove(log_path)
+        cat("Filenames reverted. Log file removed.")
+      }
+}
+
+# Standardize filenames to have a location prefix based on the parent and grand-
+# parent folders and a timestamp either copied from preexisting info or generated
+# from each file's modification time.
+fixFilename <- Vectorize(function(file_path) {
+  fname_orig <- basename(file_path)
+  folder <- dirname(file_path)
+  stn <- str_split(basename(folder), '_')[[1]][-1] 
+  site <- basename(dirname(folder))
+  loc_code <- paste(site, stn, sep='-')
+  tstamp <- regmatches(fname_orig, 
+                       regexpr("[[:digit:]]{8}_[[:digit:]]{6}.wav", 
+                               fname_orig))
+  if(length(tstamp) == 0) {
+    mod_time <- file.mtime(file_path)
+    tstamp <- strftime(mod_time, "%Y%m%d_%H%M%S.wav")
+  }
+  fname_new <- paste(loc_code, tstamp, sep='_')
+  return(fname_new)
+})
+
+# Just replaces backslashes with forward slashes so the app will not choke on 
+# user-supplied paths.
 correctPath <- function(raw_path) {
   corrected_path <- str_replace_all(raw_path, "\\\\", "/")
   return(corrected_path)
@@ -58,6 +126,20 @@ makeOutputDir <- function(target_dir, output_dir) {
   target_dir_name = basename(target_dir)
   image_dir = file.path(output_dir, target_dir_name, "images")
   return(image_dir)
+}
+
+getSiteName <- function(target_dir) {
+  comps <-strsplit(basename(target_dir), "_")[[1]]
+  if(length(comps) == 0) {
+    return("")
+  } else {
+      if ( comps[1] == "Stn" ) {
+        site_name <- paste(basename(dirname(target_dir)), comps[2], sep = "-") 
+        } else {
+          site_name <- basename(target_dir) 
+        }
+      return(site_name)
+  }
 }
 
 # Make a list of output directories part_01, part_02, ..., part_n to break up
