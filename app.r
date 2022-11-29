@@ -86,7 +86,7 @@ ui = fluidPage(
 		      actionButton("backButton", label = "Back to inputs"),
 		    ),
 		    tabPanelBody("settingsControlPanel",
-                     h3("Settings"),
+                     h3("Settings and utilities", inline=TRUE),
 		                 h5("_______________________________"),
 		                 h4("Image directory"),
 		                 textInput("customOutputDir",
