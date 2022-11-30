@@ -64,8 +64,8 @@ ui = fluidPage(
       		h5("Click Explore Detections to view apparent detections plotted over time by class and recording station."),
       		actionButton("exploreDetsButton", label = "Explore Detections", disabled = TRUE),
       		br(),
-      		h5("Click Settings to configure the app's behavior."),
-      		actionButton("settingsButton", "Settings")
+      		h5("Click Settings and Utilities to configure the app's behavior and find tools to assist in audio processing."),
+      		actionButton("settingsButton", "Settings and Utilities")
 		    ),
 		    
 		    tabPanelBody("exploreControlPanel",
@@ -86,11 +86,11 @@ ui = fluidPage(
 		      actionButton("backButton", label = "Back to inputs"),
 		    ),
 		    tabPanelBody("settingsControlPanel",
-                     h3("Settings and utilities", inline=TRUE),
+                     h3("Settings and Utilities"),
 		                 h5("_______________________________"),
 		                 h4("Image directory"),
 		                 textInput("customOutputDir",
-		                           h5("Choose the directory where spectrograms will be created. This folder will be created if it does not already exist. If left blank, spectrograms will be created in a folder called Temp in the directory containing your audio data."),
+		                           h5("Choose the directory where spectrogram image files will be saved. This folder will be created if it does not already exist. If left blank, spectrograms will be created in a folder called Temp in the directory containing your audio data."),
 		                           placeholder = "F:\\Path\\to\\directory",
 		                           value=custom_output_dir),
 		                 actionButton("saveOutputDirButton",
@@ -139,6 +139,7 @@ ui = fluidPage(
   	                 plotOutput({ "detectionPlot" }),
   	    ),
   	    tabPanelBody("settingsMainPanel",
+  	                 h4(textOutput({"renamePreviewHeader"})),
   	                 h4(textOutput({"renamePreviewSummary"})),
   	                 fluidRow(column(12, div(tableOutput( {"renamePreviewTable"} ),
   	                                         style="height:500px;overflow-y:scroll"))))
@@ -249,7 +250,17 @@ server = function(input, output, session) {
 	  rv$show_rename_preview_table <- TRUE
 	  toggleState(id="showPreviewButton", condition=FALSE)
 	  toggleState(id="hidePreviewButton", condition=TRUE)
-	  toggleState(id="renameFilesButton", condition=TRUE)
+	  if(detectDuplicates()) {
+	    showModal(modalDialog(title = "Cannot Rename Files",
+	                          "Renaming would result in duplicate file paths.",
+	                          size = "m",
+	                          footer = modalButton("Dismiss"),
+	                          easyClose = TRUE))  	  
+	  } else {
+	    if(nFilenameChanges() > 0) {
+  	    toggleState(id="renameFilesButton", condition=TRUE)
+      }
+	   }
 	})
 	
 	hidePreviewTable <- observeEvent(input$hidePreviewButton, {
@@ -545,21 +556,45 @@ server = function(input, output, session) {
 	  } else {
 	    log_path <- renameLogFile()
 	    if(!log_path=="") {
-	      previewTable <- read_csv(log_path, show_col_types = FALSE) %>% 
+	      preview_table <- read_csv(log_path, show_col_types = FALSE) %>% 
 	        mutate(Change = ifelse(Former == New, "No", "Yes"))
 	    } else {
-	      previewTable <- makeRenamePreviewTable(wavs, input_dir)
+	      preview_table <- makeRenamePreviewTable(wavs, input_dir)
 	    }
 	  }
 	})
 	
+	detectDuplicates <- eventReactive(input$showPreviewButton, {
+	  preview_table <- previewTable()
+	  if(nrow(preview_table) == 0) {
+	    return(FALSE)
+	  } else {
+	    dups <- preview_table %>% select(Folder, New) %>% anyDuplicated()
+	    if(dups > 0) {
+	      return(TRUE)
+	    } else {
+	      return(FALSE)
+	    }
+	  }
+	})
+	
+	nFilenameChanges <- eventReactive(input$showPreviewButton, {
+	  preview_table <- previewTable()
+	  n_changes <- preview_table %>% filter(Change == "Yes") %>% nrow()
+	  return(n_changes)
+	})
+	
 	previewSummary <- eventReactive(input$showPreviewButton, {
 	  preview_table <- previewTable()
+	  n_changes <- nFilenameChanges()
 	  if(nrow(preview_table) == 0) {
 	    return("")
 	  } else {
-        n_changes <- preview_table %>% filter(Change == "Yes") %>% nrow()
-	      return(sprintf("%d files will be renamed.", n_changes))
+	      if(n_changes == 0) {
+	        return("All filenames are correct. No changes will be made.")
+	      } else {
+  	        return(sprintf("%d files will be renamed.", n_changes))
+	      }
 	  }
 	})
 	
@@ -569,6 +604,14 @@ server = function(input, output, session) {
     } else {  }
 	})
 
+	output$renamePreviewHeader <- renderText({
+	  target_dir <- correctedDir()
+	  if(rv$show_rename_preview_table) {
+	    header <- sprintf("Previewing filename changes for .wav files in %s.", 
+	                      target_dir)
+	  } else {  }
+	})
+	
 	output$renamePreviewSummary <- renderText({
 	  if(rv$show_rename_preview_table) {
   	  summary <- previewSummary()
