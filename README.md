@@ -4,7 +4,21 @@ See the document "Shiny_PNW-Cnet_installation_and_use" for detailed instructions
 
 To get started, click the green Code button at the top right and choose Download ZIP, then extract the folder into your RStudio home directory.
 
-<b>NOTE 29 Sept 2022:</b>
+<b>NOTES 01 Dec 2022:</b>
+
+We have recently added some useful features to the app, including:
+
+- More informative audio data summary
+
+- Saving spectrograms in a custom location for faster processing and better disk space usage
+
+- Renaming audio files from within the app
+
+- Finer control over multiprocessing
+
+These new features are all outlined in the user's guide, which also features a shiny new table of contents.
+
+<b>NOTES 29 Sept 2022:</b>
 
 The <code>reticulate::install_miniconda()</code> function is now installing a new version of conda (22.9) which may cause issues installing some packages. Installing miniconda from RStudio still works, but it then fails to create the r-reticulate package and returns an error. We recommend using the Anaconda Prompt to create the r-reticulate environment from outside RStudio using the command
 
