@@ -8,13 +8,15 @@ To get started, click the green Code button at the top right and choose Download
 
 We have recently added some useful features to the app, including:
 
-- More informative audio data summary
+- More informative summary of audio data
 
 - Saving spectrograms in a custom location for faster processing and better disk space usage
 
 - Renaming audio files from within the app
 
 - Finer control over multiprocessing
+
+- Processing speed calculated and reported in the RStudio console
 
 These new features are all outlined in the user's guide, which also features a shiny new table of contents.
 
