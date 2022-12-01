@@ -19,6 +19,7 @@ We have recently added some useful features to the app, including:
 - Processing speed calculated and reported in the RStudio console
 
 These new features are all outlined in the user's guide, which also features a shiny new table of contents.
+To benefit from the new features, remove the Shiny_PNW-Cnet-main folder from your RStudio home directory, then download this repository and extract it into your home directory as usual.
 
 <b>NOTES 29 Sept 2022:</b>
 
