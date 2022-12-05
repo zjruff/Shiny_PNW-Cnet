@@ -18,7 +18,7 @@ def makePredictions(target_dir, model_path):
                     'HYPI', 'INSP', 'IXNA', 'MEKE', 'MYTO', 'NUCO', 'OCPR', 'ORPI', 
                     'PAFA', 'PECA', 'PHNU', 'PIMA', 'POEC', 'PSFL', 'SHOT', 'SITT', 
                     'SPRU', 'STOC', 'STOC_IRREG', 'STVA', 'STVA_IRREG', 'TADO1', 
-                    'TADO2', 'TATO', 'TUMI', 'WHIS', 'YARD', 'ZEMA']
+                    'TADO2', 'TAMI', 'TUMI', 'WHIS', 'YARD', 'ZEMA']
 
     # Find all the PNG files in the directory tree.
     image_paths = []
