@@ -31,6 +31,14 @@ makeImgs <- function(wav_path, output_dir, sox_path) {
 	return()
 }
 
+# Remove all PNG files and subfolders from the image directory, then delete the
+# image directory and its parent folder (either Temp or the remote directory)
+clearImageDir <- function(image_dir) {
+  temp_dir <- dirname(image_dir)
+  unlink(temp_dir, recursive=TRUE)
+}
+
+
 # Make a nicely formatted table showing the wavs found in the directory tree
 makeWavTable <- function(wav_list, top_dir) {
   wav_table <- as.data.frame(wav_list) %>% 
@@ -120,7 +128,7 @@ correctPath <- function(raw_path) {
 # Make an output folder in output_dir with the same name as target_dir and 
 # containing the ./Temp/images structure we want. Return the path to the images
 # directory.
-makeOutputDir <- function(target_dir, output_dir) {
+makeImageDir <- function(target_dir, output_dir) {
   target_dir <- correctPath(target_dir)
   output_dir <- correctPath(output_dir)
   target_dir_name = basename(target_dir)
@@ -419,12 +427,15 @@ buildDetPlot <- function(class_name, det_table, threshold, timescale) {
       dets <- det_table %>%
         filter(Threshold == threshold) %>%
         select(Station, Rec_Date, Week, Threshold, all_of(class_name)) %>%
-        rename(Count = class_name) %>% 
-        mutate(Date = as_date(Rec_Date))
+        rename(Week_Num = Week, Count = class_name) %>% 
+        mutate(Date = as_date(Rec_Date)) %>% 
+        group_by(Week_Num) %>%
+        mutate(Week = min(Date))
       
       det_plot <- dets %>% ggplot() +
           geom_bar(mapping = aes(x = get(time_group), y = Count, fill = Station), 
                    stat="identity", show.legend = FALSE) +
+          scale_x_date(date_breaks="1 week", date_labels="%m/%d") +
           facet_wrap(~Station) +
           labs(x = time_group, y = "Apparent detections", 
                title = sprintf("Apparent %s detections by %s, threshold = %s",
