@@ -98,6 +98,7 @@ ui = fluidPage(
 		                 actionButton("clearOutputDirButton",
 		                              label = "Clear"),
 		                 checkboxInput("splitSpectrogramGeneration", label="Split image directory into subfolders for large datasets (recommended)", value=TRUE),
+		                 checkboxInput("deleteSpectrogramsWhenDone", label="Delete spectrograms when processing is complete", value=TRUE),
 		                 
 		                 h5("_______________________________"),
 		                 
@@ -220,7 +221,7 @@ server = function(input, output, session) {
 	updateButtons <- observeEvent(input$checkdirbutton, {
 	  toggleState(id = "checkdirbutton", condition = TRUE)
 	  toggleState(id = "settingsButton", condition = TRUE)
-	  wavs <- listWavs()
+	  wavs <- getWavs()
 	  predfile <- getPredFile()
 	  revfile <- getRevFile()
 	  if ( length(wavs) > 0 ) {
@@ -269,21 +270,6 @@ server = function(input, output, session) {
 	  toggleState(id="showPreviewButton", condition=TRUE)
 	  toggleState(id="renameFilesButton", condition=FALSE)
 	})
-	
-	# The list of all .wav files in the target directory, including subdirectories.
-	listWavs <- reactive({
-		in_dir = correctedDir()
-		wavs_found = findFiles(in_dir, ".wav")
-		valid_wavs = wavs_found[ lapply(wavs_found, file.size) >= 500000 ] # Ignore wavs with size < 500 KB or so
-		valid_wavs[ lapply(valid_wavs, rmParts) == TRUE ]
-	})
-	
-	# List of .csv files in the target directory. Used to update some values when
-	# output is written to file.
-	listCsvs <- reactive({
-	  in_dir <- correctedDir()
-	  csvs_found <- list.files(in_dir, pattern = "[[:alnum:][:punct:]]+.csv")
-	})
 
 	# Calculated when the button is pressed. Return a list of all wav files in the
 	# directory tree rooted at the input directory.
@@ -325,7 +311,7 @@ server = function(input, output, session) {
 	  toggleState(id = "checkdirbutton", condition = FALSE)
 	  toggleState(id = "settingsButton", condition = FALSE)
 	  
-	  wavs <- listWavs()
+	  wavs <- getWavs()
 	  
 	  if(length(wavs) == 0) {
       cat("\nNo .wav files available to process.\n")
@@ -338,14 +324,14 @@ server = function(input, output, session) {
     cnn_path <- model_path
 		target_dir <- correctedDir()
     custom_output_dir <- correctedOutputDir()
-	  
+    
     # Check if the user entered a custom output directory for the spectrograms,
 	  # create it if necessary, and use this value for image_dir. On error, it will
 	  # use the default version.
 		if(custom_output_dir == "") {
   		image_dir = file.path(target_dir, "Temp", "images")
 		} else { 
-  		  image_dir = makeOutputDir(target_dir, custom_output_dir) }
+  		  image_dir = makeImageDir(target_dir, custom_output_dir) }
 		
     if(!dir.exists(image_dir)) { dir.create(image_dir, recursive=TRUE) }
     
@@ -358,11 +344,11 @@ server = function(input, output, session) {
     } else { spectro_dirs <- rep(image_dir, length(wavs)) }
     
 		outname <- getSiteName(target_dir)
-
+		
 		# Check if spectrograms have already been generated. If so, skip that step.
 		pngs <- findFiles(image_dir, ".png")
 
-		use_cores <- as.integer(input$useCores)
+		use_cores <- input$useCores
 		
 		spectro_start_time <- Sys.time()
 		
@@ -416,6 +402,13 @@ server = function(input, output, session) {
 		
 		cat(sprintf("\nSuccessfully processed %s hours of data in %.1f hours (ratio: %.1f).\n",
 		            total_duration_pretty, run_time, total_duration / run_time))
+		
+		if(input$deleteSpectrogramsWhenDone) {
+		  cat("\nDeleting spectrograms and removing temporary directories... ")
+		  temp_dir <- dirname(image_dir)
+		  unlink(temp_dir, recursive=TRUE)
+		  cat("Done.\n")
+		}
 		
 		showModal(modalDialog(title = "Processing complete",
 		                      "Audio processing complete. Class scores written to file.",
@@ -539,11 +532,12 @@ server = function(input, output, session) {
 	})
 
 	output$showFiles <- renderTable({
-		wavs <- getWavs()
+	  wavs <- getWavs()
+	  target_dir <- correctedDir()
 		if(length(wavs) == 0) {
 		  return()
 		} else {
-  		makeWavTable(wavs, correctedDir())
+		  makeWavTable(wavs, target_dir)
 		}
 	})
 	
@@ -644,14 +638,17 @@ server = function(input, output, session) {
 	
 	# Define number of available cores
 	output$use_nCores <- renderUI({
-	  if(input$useLogicalCores) {
-	    available_cores <- ncores_logical
-	  } else { available_cores <- ncores_physical 
-	  }
-	  selectInput("useCores",
+	  available_cores <- ifelse(input$useLogicalCores,
+	                            ncores_logical,
+	                            ncores_physical)
+	  sliderInput("useCores",
 	              label=h5("Number of processing nodes to use for spectrogram generation:"),
-	              choices = rev(seq(1, available_cores)),
-	              selected=available_cores)
+	              min=1,
+	              max=available_cores,
+	              value=available_cores,
+	              step=1,
+	              round=TRUE,
+	              ticks=FALSE)
 	})
 
 	output$renameButton <- renderUI({
