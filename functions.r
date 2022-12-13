@@ -427,7 +427,7 @@ buildDetPlot <- function(class_name, det_table, threshold, timescale) {
       dets <- det_table %>%
         filter(Threshold == threshold) %>%
         select(Station, Rec_Date, Week, Threshold, all_of(class_name)) %>%
-        rename(Week_Num = Week, Count = class_name) %>% 
+        rename(Week_Num = Week, Count = all_of(class_name)) %>% 
         mutate(Date = as_date(Rec_Date)) %>% 
         group_by(Week_Num) %>%
         mutate(Week = min(Date))
