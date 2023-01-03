@@ -1,4 +1,4 @@
-# Updated Aug 2022.
+# Updated Jan 2023.
 # Makes use of PNW-Cnet version 4 (51-class). See ./target_classes.csv for 
 # descriptions of each class.
 
@@ -155,6 +155,7 @@ server = function(input, output, session) {
   rv <- reactiveValues()
   rv$show_rename_preview_table <- FALSE
   rv$files_renamed <- FALSE
+  rv$use_cores <- detectCores()
   
   # Change from Input tab to Explore tab.
   switchTabs1 <- observeEvent(input$exploreDetsButton, {
@@ -353,14 +354,13 @@ server = function(input, output, session) {
 		
 		# Check if spectrograms have already been generated. If so, skip that step.
 		pngs <- findFiles(image_dir, ".png")
-
-		use_cores <- input$useCores
 		
 		spectro_start_time <- Sys.time()
 		
 		if(length(pngs) > 0) {
 			cat(sprintf("\nImage data already present in %s.\n", image_dir))
 		} else {
+		  use_cores <- rv$use_cores
 		  cat(sprintf("\nSpectrograms will be created in %s.\n", image_dir))
 		  cat(sprintf("\nGenerating spectrograms using %d nodes starting at %s... \n", 
 		              use_cores, format(spectro_start_time, "%X")))
@@ -382,6 +382,8 @@ server = function(input, output, session) {
 		cat(sprintf("\nProceeding to CNN classification at %s...\n", 
 		            format(predict_start_time, "%X")))
 		
+		cat("\n(The following warnings from TensorFlow are expected and can be safely ignored.)\n")
+		
 		# Classify spectrograms, write predictions to output file
 		predictions <- makePredictions(image_dir, cnn_path) %>% 
 		  mutate(across(AEAC:ZEMA, function(x) 
@@ -394,7 +396,8 @@ server = function(input, output, session) {
 		
 		cat(sprintf("\nFinished at %s.\n", 
 		            format(predict_end_time, "%X")))
-		cat(sprintf("\nClass scores written to %s in folder %s.\n", basename(output_file), target_dir))
+		cat(sprintf("\nClass scores written to %s in folder %s.\n", 
+		            basename(output_file), target_dir))
 		
 		cat("\nSummarizing detections...\n")
 		det_table <- buildDetTable(predictions)
@@ -404,7 +407,9 @@ server = function(input, output, session) {
 		cat(sprintf("\nDetection summary written to file.\n"))
 		
 		run_time <- as.numeric(predict_end_time - spectro_start_time, units="hours")
-		total_duration_pretty <- total_duration %>% round(digits=1) %>% format(big.mark=",")
+		total_duration_pretty <- total_duration %>% 
+		  round(digits=1) %>% 
+		  format(big.mark=",")
 		
 		cat(sprintf("\nSuccessfully processed %s hours of data in %.1f hours (ratio: %.1f).\n",
 		            total_duration_pretty, run_time, total_duration / run_time))
@@ -660,6 +665,10 @@ server = function(input, output, session) {
 	  thresh <- input$plot_threshold
 	  timescale <- input$plot_timescale
 	  buildDetPlot(target_class, detTable(), thresh, timescale)
+	})
+	
+	changeUseCores <- observeEvent(input$useCores, {
+	  rv$use_cores <- input$useCores
 	})
 	
 	# Define number of available cores
