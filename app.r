@@ -154,6 +154,7 @@ ui = fluidPage(
 server = function(input, output, session) {
   rv <- reactiveValues()
   rv$show_rename_preview_table <- FALSE
+  rv$files_renamed <- FALSE
   
   # Change from Input tab to Explore tab.
   switchTabs1 <- observeEvent(input$exploreDetsButton, {
@@ -196,15 +197,15 @@ server = function(input, output, session) {
 	  corrected = correctPath(orig)
 	})
 	
-	renameLogFile <- eventReactive(input$checkdirbutton, {
-	  top_dir <- correctedDir()
-	  log_path <- file.path(top_dir, "Rename_Log.csv")
-	  if(file.exists(log_path)) {
-	    return(log_path)
-	  } else {
-	    return("")
-	  }
-	})
+	# renameLogFile <- eventReactive(input$checkdirbutton, {
+	#   top_dir <- correctedDir()
+	#   log_path <- file.path(top_dir, "Rename_Log.csv")
+	#   if(file.exists(log_path)) {
+	#     return(log_path)
+	#   } else {
+	#     return("")
+	#   }
+	# })
 	
 	clearCustomOutputDir <- observeEvent(input$clearOutputDirButton, {
 	  updateTextInput(session, "customOutputDir", value="")
@@ -224,6 +225,11 @@ server = function(input, output, session) {
 	  wavs <- getWavs()
 	  predfile <- getPredFile()
 	  revfile <- getRevFile()
+	  renamelogfile <- getRenameLogFile()
+	  if(renamelogfile != "") {
+	    rv$files_renamed <- TRUE
+	  }
+	  
 	  if ( length(wavs) > 0 ) {
 	    toggleState(id = "processbutton", condition = TRUE)
 	    toggleState(id = "previewRenameButton", condition=TRUE)
@@ -487,6 +493,16 @@ server = function(input, output, session) {
 	    return( "" )
 	  }
 	})
+	
+	getRenameLogFile <- eventReactive(input$checkdirbutton, {
+	  target_dir <- correctedDir()
+	  log_file_path <- file.path(target_dir, "Rename_Log.csv")
+	  if(file.exists(log_file_path)) {
+	    return( log_file_path )
+	  } else {
+	    return( "" )
+	  }
+	})
 
 	detTable <- eventReactive(input$exploreDetsButton, {
 	  req(getSummaryFile())
@@ -548,7 +564,7 @@ server = function(input, output, session) {
 	  if(length(wavs) == 0) {
 	    return()
 	  } else {
-	    log_path <- renameLogFile()
+	    log_path <- getRenameLogFile()
 	    if(!log_path=="") {
 	      preview_table <- read_csv(log_path, show_col_types = FALSE) %>% 
 	        mutate(Change = ifelse(Former == New, "No", "Yes"))
@@ -582,14 +598,21 @@ server = function(input, output, session) {
 	  preview_table <- previewTable()
 	  n_changes <- nFilenameChanges()
 	  if(nrow(preview_table) == 0) {
-	    return("")
+	    msg <- ""
 	  } else {
 	      if(n_changes == 0) {
-	        return("All filenames are correct. No changes will be made.")
+	        msg <- "All filenames are correct. No changes will be made."
 	      } else {
-  	        return(sprintf("%d files will be renamed.", n_changes))
+  	        if(rv$files_renamed) {
+  	          msg <- sprintf("Click Undo Renaming to reverse changes to %d filenames.",
+  	                         n_changes)
+  	        } else {
+  	          msg <- sprintf("Click Rename Files to enact changes to %d filenames.", 
+  	                         n_changes)
+  	        }
 	      }
 	  }
+	  return(msg)
 	})
 	
 	output$renamePreviewTable <- renderTable({
@@ -601,8 +624,11 @@ server = function(input, output, session) {
 	output$renamePreviewHeader <- renderText({
 	  target_dir <- correctedDir()
 	  if(rv$show_rename_preview_table) {
-	    header <- sprintf("Previewing filename changes for .wav files in %s.", 
-	                      target_dir)
+	    if(rv$files_renamed) {
+	      header <- sprintf("Showing changes made to .wav filenames in %s.", target_dir)
+	    } else {
+  	    header <- sprintf("Previewing changes to .wav filenames in %s.", target_dir)
+	    }
 	  } else {  }
 	})
 	
@@ -652,8 +678,7 @@ server = function(input, output, session) {
 	})
 
 	output$renameButton <- renderUI({
-	  preview_table <- previewTable()
-	  if("Current" %in% names(preview_table)) {
+	  if(rv$files_renamed == FALSE) {
 	    actionButton("renameFilesButton",
 	                 label="Rename Files",
 	                 disabled=TRUE)
