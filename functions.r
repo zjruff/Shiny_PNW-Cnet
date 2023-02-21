@@ -188,7 +188,8 @@ findFiles <- function(top_dir, extension) {
 	files = list.files(path = top_dir,
 						pattern = sprintf("%s$", extension),
 						recursive = TRUE,
-						full.names = TRUE)
+						full.names = TRUE,
+						ignore.case = TRUE)
 	return(files)
 }
 
