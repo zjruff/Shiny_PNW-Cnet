@@ -38,7 +38,6 @@ clearImageDir <- function(image_dir) {
   unlink(temp_dir, recursive=TRUE)
 }
 
-
 # Make a nicely formatted table showing the wavs found in the directory tree
 makeWavTable <- function(wav_list, top_dir) {
   wav_table <- as.data.frame(wav_list) %>% 
@@ -109,7 +108,8 @@ fixFilename <- Vectorize(function(file_path) {
   loc_code <- paste(site, stn, sep='-')
   tstamp <- regmatches(fname_orig, 
                        regexpr("[[:digit:]]{8}_[[:digit:]]{6}.wav", 
-                               fname_orig))
+                               fname_orig,
+                               ignore.case=TRUE))
   if(length(tstamp) == 0) {
     mod_time <- file.mtime(file_path)
     tstamp <- strftime(mod_time, "%Y%m%d_%H%M%S.wav")
@@ -309,74 +309,74 @@ makeReviewFile <- function(predfile, outputmode="kscope") {
 # Creates a file that imitates the files created by the clustering function in 
 # Kaleidoscope and can be read by the same program. 
 makeKscopeTable <- function(review_df, input_dir) {
-	review_df$TOP1DIST = sapply(seq_len(nrow(review_df)),
+	review_df$TOP1DIST <- sapply(seq_len(nrow(review_df)),
 							  function(i) { review_df[i, review_df$Sortlabel[[i]], 
 													  drop=TRUE] })
-	workdf = review_df %>% select(c("Filename", "Sortlabel", "TOP1DIST", "Stn", "Week"))
-	workdf <- workdf %>% mutate(OFFSET = getOffset(Filename),
-							  TOP1MATCH = Sortlabel,
-							  "IN FILE" = getSrcFile(Filename),
-							  "SORT" = sprintf("%s_%s_%s", Sortlabel, Stn, Week),
-							  PART = getStrPart(Filename),
-							  MMSS = getStrOffset(OFFSET))
+	workdf <- review_df %>% 
+	  select(c("Filename", "Sortlabel", "TOP1DIST", "Stn", "Week")) %>% 
+	  mutate(OFFSET = getOffset(Filename), 
+	         TOP1MATCH = Sortlabel,
+	         INFILEUPPER = toupper(getSrcFile(Filename)),
+	         SORT = sprintf("%s_%s_%s", Sortlabel, Stn, Week),
+	         PART = getStrPart(Filename),
+	         MMSS = getStrOffset(OFFSET))
 
-	wavs = as.data.frame(findFiles(input_dir, ".wav"))
-	names(wavs) = "Path"
-	wavs$"IN FILE" = basename(wavs$Path)
-
-	output_df = left_join(x=workdf, y=wavs, by = "IN FILE")
-
-	output_df$FOLDER = getFolder(output_df$Path, in_dir=input_dir)
-	output_df <- output_df %>% mutate(CHANNEL = 0, DURATION = 12) %>% 
-	select(FOLDER, "IN FILE", CHANNEL, OFFSET, DURATION, TOP1MATCH,
+	wavs <- data.frame("Path" = findFiles(input_dir, ".wav")) %>% 
+	  mutate(`IN FILE` = basename(Path),
+	         INFILEUPPER = toupper(`IN FILE`))
+  
+	output_df <- left_join(x = workdf, y = wavs, by = "INFILEUPPER") 
+	
+	output_df <- output_df %>% 
+	  mutate(FOLDER = getFolder(output_df$Path, in_dir=input_dir),
+	         CHANNEL = 0, 
+	         DURATION = 12) %>%
+	  select(FOLDER, `IN FILE`, CHANNEL, OFFSET, DURATION, TOP1MATCH,
 		   TOP1DIST, MMSS, SORT, PART) %>%
-	mutate(Fmin='', Fmean='', Fmax='', DATE='', TIME='', HOUR='', "DATE-12"='',
-		   "TIME-12"='', "HOUR-12"='', .before=TOP1MATCH) %>%
-	mutate(VOCALIZATIONS=1, "MANUAL ID" = '', .after=PART)
+	  mutate(Fmin='', Fmean='', Fmax='', DATE='', TIME='', HOUR='', `DATE-12`='',
+		   `TIME-12`='', `HOUR-12`='', .before=TOP1MATCH) %>%
+	  mutate(VOCALIZATIONS = 1, `MANUAL ID` = '', .after=PART)
+	
 	return(output_df)
 }
 
 # Extracts short WAV files to be validated manually. Will be sorted into subfolders
 # by presumptive label, then by station, then by week.
 extractWavs <- function(review_file, top_dir, sox_path) {
-	# Read and restructure the Review file
-	inframe = read.csv(review_file) %>% select(Filename, Sortlabel, Week)
+	inframe <- read.csv(review_file) %>% select(Filename, Sortlabel, Week)
 	
 	if(nrow(inframe) == 0) { 
 		cat("\nNo potential detections found.\n")
-		return() 
+		return()
 	} else {
 		cat(sprintf("\nExtracting wav files beginning at %s...\n", format(Sys.time(), "%X")))
-		inframe$SrcFile = getSrcFile(as.character(inframe$Filename))
-		# Build the list of Wav files in the directory tree
-		wav_df = as.data.frame(findFiles(top_dir, ".wav"))
-		names(wav_df) = "SrcPath"
-		wav_df$SrcFile = basename(as.character(wav_df$SrcPath))
-		# Merge information about the wavs in the directory tree with the clips that need
-		# to be extracted
-		newframe = merge(x=inframe, y=wav_df, by="SrcFile")
-		newframe$SrcFile = NULL
 		
-		# Create review directories for each target class found in review file
-		newframe$Stn = getStn(as.character(newframe$Filename))
-		#newframe$StrWeek = getStrWeek(newframe$Week)
-		newframe$DstDir = file.path(top_dir, "Review", newframe$Sortlabel, newframe$Stn, newframe$Week)
-	
+	  inframe <- inframe %>% 
+		  mutate(SrcFile = toupper(getSrcFile(Filename)))
+		
+		wav_df <- data.frame("SrcPath" = findFiles(top_dir, ".wav")) %>% 
+		  mutate(SrcFile = toupper(basename(SrcPath)))
+		
+		newframe <- merge(x = inframe, y = wav_df, by = "SrcFile") %>% 
+		  mutate(Stn = getStn(Filename),
+		         DstDir = file.path(top_dir, "Review", Sortlabel, Stn, Week))
+		
 		for (x in unique(newframe$DstDir)) {
 			dir.create(x, showWarnings=FALSE, recursive=TRUE) }
 		
-		newframe$DstPath = file.path(newframe$DstDir, str_replace(newframe$Filename, "png", "wav"))
+		newframe <- newframe %>% 
+		  mutate(DstPath = file.path(DstDir, str_replace(Filename, "png", "wav")))
 		
-		# Set up the cluster to extract wav files
-		ncores = detectCores()
-		cl = makeCluster(ncores)
+		ncores <- detectCores()
+		cl <- makeCluster(ncores)
 		clusterExport(cl = cl, varlist = c("wavExtract", "newframe", "sox_path"), envir = environment())
 		clusterMap(cl = cl, wavExtract, newframe$SrcPath, newframe$DstPath, sox_path)
 		stopCluster(cl)
 		
-		# Report success
-		newwavs = findFiles(file.path(top_dir, "Review"), ".wav")
-		cat(sprintf("Finished at %s. %d clips extracted.\n", format(Sys.time(), "%X"), length(newwavs)))
+		newwavs <- findFiles(file.path(top_dir, "Review"), ".wav")
+		cat(sprintf("Finished at %s. %d clips extracted.\n", 
+		            format(Sys.time(), "%X"), 
+		            length(newwavs)))
 	  }
 }
 
