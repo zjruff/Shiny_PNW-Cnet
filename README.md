@@ -4,6 +4,12 @@ See the document "Shiny_PNW-Cnet_installation_and_use" for detailed instructions
 
 To get started, click the green Code button at the top right and choose Download ZIP, then extract the folder into your RStudio home directory.
 
+<b>NOTES 07 Aug 2023:</b>
+
+We have a new paper describing Shiny_PNW-Cnet which was just published in the journal SoftwareX. This supersedes the preprint which was previously available through SSRN. The article is open-access and is available here: https://doi.org/10.1016/j.softx.2023.101473
+
+Please cite this article in any publications or presentations referencing the Shiny app or the PNW-Cnet model.
+
 <b>NOTES 01 Dec 2022:</b>
 
 We have recently added some useful features to the app, including:
