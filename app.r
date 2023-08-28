@@ -1,4 +1,4 @@
-# Updated Jan 2023.
+# Updated Aug 2023.
 # Makes use of PNW-Cnet version 4 (51-class). See ./target_classes.csv for 
 # descriptions of each class.
 
@@ -17,14 +17,14 @@ source("./settings")
 source("./functions.r")
 source_python("./scripts/pnw-cnet_v4_predict.py")
 
-ncores_logical = detectCores()
-ncores_physical = detectCores(logical = FALSE)
+ncores_logical <- detectCores()
+ncores_physical <- detectCores(logical = FALSE)
 
-model_path = "./PNW-Cnet_v4_TF.h5"
+model_path <- "./PNW-Cnet_v4_TF.h5"
 
 # Change the following line if you installed SoX in a different location.
-sox_dir = "C:/Program Files (x86)/sox-14-4-2"
-sox_path = file.path(sox_dir, "sox")
+sox_dir <- "C:/Program Files (x86)/sox-14-4-2"
+sox_path <- file.path(sox_dir, "sox")
 
 class_desc <- read_csv("./target_classes.csv", show_col_types = FALSE)
 class_list <- class_desc %>% 
@@ -32,10 +32,18 @@ class_list <- class_desc %>%
   pull(Str_Class)
 class_names <- class_desc %>% pull(Class)
 
-ui = fluidPage(
+nso_classes <- c("STOC", "STOC_IRREG")
+non_nso_classes <- class_names[!(class_names %in% nso_classes)]
+default_review_settings <- data.frame(Class = c(nso_classes, non_nso_classes),
+                                      Threshold = c(rep(0.25, length(nso_classes)),
+                                                    rep(0.95, length(non_nso_classes)))) %>% 
+  inner_join(class_desc, by = "Class") %>% 
+  select(Class, Sound, Threshold)
+
+ui <- fluidPage(
 	useShinyjs(),
 	
-	titlePanel("Neural net processing for audio data"),
+	titlePanel("Shiny_PNW-Cnet: Neural net processing for audio data"),
 
 	# Tabset panel allows switching between several modes: Input, where the user
 	# can designate a target directory and carry out processing tasks; Explore,
@@ -55,10 +63,10 @@ ui = fluidPage(
       		h5("Click Process Files to generate spectrograms and use PNW-Cnet to predict class scores. This may take several hours. Please make sure all inputs are correct and that your computer will not go to sleep, shut down or restart during this process."),
       		actionButton("processbutton", label = "Process Files", disabled = TRUE),
       		br(),
-      		h5("Click Create Review File to examine an existing CNN_Predictions file and determine which clips need to be validated."),
+      		h5("Click Create Review File to export apparent detections to a separate file for manual review."),
       		actionButton("revExtButton", label = "Create Review File", disabled = TRUE),
       		br(),
-      		h5("Click Extract Review Clips to extract apparent detections as 12-second clips for further review or archival."),
+      		h5("Click Extract Review Clips to extract apparent detections as 12-second audio clips for further review or archival."),
       		actionButton("extractWavsButton", label = "Extract Review Clips", disabled = TRUE),
       		br(),
       		h5("Click Explore Detections to view apparent detections plotted over time by class and recording station."),
@@ -83,6 +91,10 @@ ui = fluidPage(
 		      selectInput("plot_timescale", label = "Summarize detections...",
 		                  choices = c("Weekly", "Daily")),
 		      
+		      h5("Click Create single-class review file to generate a file listing apparent detections for the chosen class at the selected threshold."),
+		      
+		      actionButton("singleClassReviewButton", "Create single-class review file"),
+		      br(),
 		      actionButton("backButton", label = "Back to inputs"),
 		    ),
 		    tabPanelBody("settingsControlPanel",
@@ -99,6 +111,23 @@ ui = fluidPage(
 		                              label = "Clear"),
 		                 checkboxInput("splitSpectrogramGeneration", label="Split image directory into subfolders for large datasets (recommended)", value=TRUE),
 		                 checkboxInput("deleteSpectrogramsWhenDone", label="Delete spectrograms when processing is complete", value=TRUE),
+		                 
+		                 h5("_______________________________"),
+		                 
+		                 h4("Review file"),
+		                 
+		                 selectInput("useReviewSettings",
+		                             label = h5("Select which settings (target classes and detection thresholds) to use when generating review files. To use custom settings, the target directory must contain a file named Review_Settings.csv with one column named \"Class\" listing the abbreviated names of the classes you want to include and another column named \"Threshold\" listing the score threshold to be used for each class."),
+		                             choices = list("Use default settings" = "default",
+		                                            "Use custom settings" = "custom")),
+		                 actionButton("showReviewSettingsButton", 
+		                              label="Show settings"),
+		                 actionButton("hideReviewSettingsButton",
+		                              label="Hide settings"),
+		                 selectInput("reviewTimescale",
+		                             label = h5("Review file should group apparent detections..."),
+		                             choices = list("Weekly", "Daily"),
+		                             selected = "Weekly"),
 		                 
 		                 h5("_______________________________"),
 		                 
@@ -143,6 +172,8 @@ ui = fluidPage(
   	                 h4(textOutput({"renamePreviewHeader"})),
   	                 h4(textOutput({"renamePreviewSummary"})),
   	                 fluidRow(column(12, div(tableOutput( {"renamePreviewTable"} ),
+  	                                         style="height:500px;overflow-y:scroll"))),
+  	                 fluidRow(column(12, div(tableOutput( {"reviewSettingsTable"} ),
   	                                         style="height:500px;overflow-y:scroll"))))
 
   	  )
@@ -151,9 +182,10 @@ ui = fluidPage(
 )
 
 # Reactive functions or variables that respond to events within the interface go here.
-server = function(input, output, session) {
+server <- function(input, output, session) {
   rv <- reactiveValues()
   rv$show_rename_preview_table <- FALSE
+  rv$show_review_settings_table <- FALSE
   rv$files_renamed <- FALSE
   rv$use_cores <- detectCores()
   
@@ -183,30 +215,20 @@ server = function(input, output, session) {
   
   # Checks if the input directory exists
 	checkDir <- eventReactive(input$checkdirbutton, {
-		topdir = correctedDir()
+		topdir <- correctedDir()
 		if(dir.exists(topdir)) { "valid" } else { "invalid" }
 	})
   
 	# Replaces backslashes with forward slashes in input path for neatness.
 	correctedDir <- reactive({
-		orig = input$topdir
-		corrected = correctPath(orig)
+		orig <- input$topdir
+		corrected <- correctPath(orig)
 	})
 	
 	correctedOutputDir <- reactive({
-	  orig = input$customOutputDir
-	  corrected = correctPath(orig)
+	  orig <- input$customOutputDir
+	  corrected <- correctPath(orig)
 	})
-	
-	# renameLogFile <- eventReactive(input$checkdirbutton, {
-	#   top_dir <- correctedDir()
-	#   log_path <- file.path(top_dir, "Rename_Log.csv")
-	#   if(file.exists(log_path)) {
-	#     return(log_path)
-	#   } else {
-	#     return("")
-	#   }
-	# })
 	
 	clearCustomOutputDir <- observeEvent(input$clearOutputDirButton, {
 	  updateTextInput(session, "customOutputDir", value="")
@@ -223,6 +245,12 @@ server = function(input, output, session) {
 	updateButtons <- observeEvent(input$checkdirbutton, {
 	  toggleState(id = "checkdirbutton", condition = TRUE)
 	  toggleState(id = "settingsButton", condition = TRUE)
+	  
+	  rv$show_review_settings_table <- FALSE
+	  toggleState(id="hideReviewSettingsButton", condition=FALSE)
+	  toggleState(id="showReviewSettingsButton", condition=TRUE)
+	  toggleState(id="refreshReviewSettingsButton", condition=FALSE)
+	  
 	  wavs <- getWavs()
 	  predfile <- getPredFile()
 	  revfile <- getRevFile()
@@ -255,6 +283,9 @@ server = function(input, output, session) {
 	})
 	
 	showPreviewTable <- observeEvent(input$showPreviewButton, {
+	  if(rv$show_review_settings_table) {
+	    rv$show_review_settings_table <- FALSE
+	  }
 	  rv$show_rename_preview_table <- TRUE
 	  toggleState(id="showPreviewButton", condition=FALSE)
 	  toggleState(id="hidePreviewButton", condition=TRUE)
@@ -277,14 +308,29 @@ server = function(input, output, session) {
 	  toggleState(id="showPreviewButton", condition=TRUE)
 	  toggleState(id="renameFilesButton", condition=FALSE)
 	})
+	
+	showReviewSettings <- observeEvent(input$showReviewSettingsButton, {
+	  if(rv$show_rename_preview_table) {
+	    rv$show_rename_preview_table <- FALSE
+	  }
+	  rv$show_review_settings_table <- TRUE
+	  # toggleState(id="showReviewSettingsButton", condition=FALSE)
+	  toggleState(id="hideReviewSettingsButton", condition=TRUE)
+	})
+	
+	hideReviewSettings <- observeEvent(input$hideReviewSettingsButton, {
+	  rv$show_review_settings_table <- FALSE
+	  toggleState(id="hideReviewSettingsButton", condition=FALSE)
+	  toggleState(id="showReviewSettingsButton", condition=TRUE)
+	  toggleState(id="refreshReviewSettingsButton", condition=FALSE)
+	})
 
-	# Calculated when the button is pressed. Return a list of all wav files in the
-	# directory tree rooted at the input directory.
 	getWavs <- eventReactive(input$checkdirbutton, {
-		in_dir = correctedDir()
-		wavs_found = findFiles(in_dir, ".wav")
-		valid_wavs = wavs_found[ lapply(wavs_found, file.size) >= 500000 ]
-		valid_wavs[ lapply(valid_wavs, rmParts) == TRUE ]
+	  in_dir <- correctedDir()
+	  wavs_found <- data.frame(Filename = findFiles(in_dir, ".wav")) %>% 
+	    filter(file.size(Filename) >= 500000,
+	           !(str_detect(Filename, "_part_"))) %>% 
+	    pull(Filename)
 	})
 	
 	# Return a text summary with the number of wav files in the directory tree and
@@ -322,7 +368,6 @@ server = function(input, output, session) {
 	  
 	  if(length(wavs) == 0) {
       cat("\nNo .wav files available to process.\n")
-	    # toggleState(id = "processbutton", condition = TRUE)
 	    return()
 	  }
     
@@ -432,26 +477,108 @@ server = function(input, output, session) {
 	})
 
 	# Creates a review file based on the CNN results file in the folder specified.
+	# Rewritten to use newer functions
 	mkReviewFile <- observeEvent(input$revExtButton, {
-	  in_dir = correctedDir()
-		predFiles = list.files(path = in_dir, 
-			pattern = "CNN_[Pp]+redictions_[[:alnum:][:punct:]]+.csv", 
-			full.names=TRUE)
-		if(length(predFiles) == 0) {
-		  cat("\nNo prediction files found in target directory.\n")
-		  return()
-		} else { predFile = predFiles[[1]] }
-		cat(sprintf("\nAtttempting to create review file based on %s...\n", 
-		            basename(predFile)))
-		nrevlines <- makeReviewFile(predFile)
+	  in_dir <- correctedDir()
+	  pred_file <- getPredFile()
+	  review_timescale <- input$reviewTimescale
+	
+	  cat(sprintf("\nAtttempting to create review file based on %s.\n",
+	              basename(pred_file)))
+	  
+	  if(input$useReviewSettings == "custom") {
+	    rev_settings_file <- getReviewSettingsFile()
+	    if(rev_settings_file == "") {
+	      cat("Could not find Review_Settings.csv. Using default settings...\n")
+	      review_settings <- default_review_settings
+	      } else {
+	        cat("Using custom review file settings...\n")
+	        review_settings <- read_csv(rev_settings_file, show_col_types = FALSE)
+	        }    
+	    } else {
+		    review_settings <- default_review_settings
+	    }
+	  
+	  review_tables <- makeCustomKscopeTable(pred_file, review_settings, review_timescale)
+	  
+	  review_table <- review_tables[[1]]
+	  kscope_table <- review_tables[[2]]
+
+	  review_path <- file.path(in_dir, sprintf("%s_review.csv", getSiteName(in_dir)))
+	  kscope_path <- str_replace(review_path, "review.csv", "review_kscope.csv")
+		
+	  nrevlines <- nrow(review_table)
     if(nrevlines == 0) {
       cat("\nPrediction file contains no potential detections. No review file created.\n")
     } else {
+      review_table %>% write_csv(review_path)
+      kscope_table %>% write_csv(kscope_path)
       cat(sprintf("\n%d potential detections written to review file.\n", nrevlines))
     }
 		click(id = "checkdirbutton")
 	})
+	
+	# Create a review file for a single class with a selected detection threshold.
+	mkSingleClassReviewFile <- observeEvent(input$singleClassReviewButton, {
+	  target_class <- str_split(input$class_selection, " - ")[[1]]
+	  class_abbr <- target_class[1]
+	  class_desc <- target_class[2]
+	  thresh <- as.double(input$plot_threshold)
+	  
+	  rev_df <- data.frame(Class = class_abbr, Threshold = thresh)
+	  
+	  timescale <- input$plot_timescale
+	  cat(sprintf("\nGenerating review file for %s (%s) with detection threshold %.2f, grouped %s...\n",
+	              class_abbr,
+	              class_desc,
+	              thresh,
+	              tolower(timescale)))
+    pred_file <- getPredFile()
+    preds <- read_csv(pred_file, show_col_types = FALSE)
+    
+    in_name <- basename(pred_file)
+    
+    det_lines <- makeCustomKscopeTable(pred_file, rev_df, timescale)[[2]]
+    
+    if(nrow(det_lines) == 0){
+      cat("Zero detections at this threshold. File not generated.\n")
+    } else {
+      out_name <- in_name %>% str_replace("CNN_Predictions_", "") %>%
+        str_replace(".csv", sprintf("_review_kscope_%s_%.2f_%s.csv",
+                                    class_abbr, thresh, timescale))
+      
+      det_lines %>% write_csv(file.path(correctedDir(), out_name))
+      
+      cat(sprintf("%d lines written to file.\n", nrow(det_lines)))
+    }
+	})
 
+	# Get a table of class abbreviations and corresponding detection thresholds,
+	# create a review file containing only the selected classes
+	mkCustomReviewFile <- observeEvent(input$customReviewFileButton, {
+	  rev_settings_file <- getReviewSettingsFile()
+	  if(rev_settings_file == "") {
+	    return()
+	  } else {
+	      pred_file <- getPredFile()
+	      preds <- read_csv(pred_file, show_col_types=FALSE)
+	      settings <- read_csv(rev_settings_file, show_col_types=FALSE)
+	      target_classes <- settings %>% pull(Class)
+	      for(i in seq_along(target_classes)) {
+	        target_class <- target_classes[i]
+	        det_threshold <- settings %>% filter(Class == target_class) %>% 
+	          pull(Threshold)
+	        new_dets <- makeCustomKscopeTable(preds, pred_file, target_class,
+	                                          det_threshold)
+	        if(i == 1) {
+	          output_lines <- new_dets
+	        } else {
+	          output_lines <- bind_rows(output_lines, new_dets)
+	        }
+	      }
+	    }
+	})
+	
 	# Extracts wav files based on review file.
 	extractWavFiles <- observeEvent(input$extractWavsButton, {
 	  in_dir = correctedDir()
@@ -509,6 +636,16 @@ server = function(input, output, session) {
 	  }
 	})
 
+	getReviewSettingsFile <- eventReactive(input$checkdirbutton, {
+	  target_dir <- correctedDir()
+	  rev_settings_path <- file.path(target_dir, "Review_Settings.csv")
+	  if(file.exists(rev_settings_path)) {
+	    return( rev_settings_path ) 
+	  } else {
+	    return( "" )
+	  }
+	})
+	
 	detTable <- eventReactive(input$exploreDetsButton, {
 	  req(getSummaryFile())
     read_csv(getSummaryFile(), show_col_types = FALSE) %>% 
@@ -560,6 +697,18 @@ server = function(input, output, session) {
 		} else {
 		  makeWavTable(wavs, target_dir)
 		}
+	})
+	
+	settingsTable <- eventReactive(input$showReviewSettingsButton, {
+	  settings_file <- getReviewSettingsFile()
+	  if(input$useReviewSettings == "default" | settings_file == "") {
+	    settings_table <- default_review_settings
+	  } else {
+	    settings_table <- read_csv(settings_file, show_col_types = FALSE) %>% 
+	      select(Class, Threshold) %>% 
+	      inner_join(class_desc, by = "Class") %>% 
+	      select(Class, Sound, Threshold)
+	  }
 	})
 	
 	# Make a table showing where filenames are not currently standardized
@@ -624,6 +773,12 @@ server = function(input, output, session) {
     if(rv$show_rename_preview_table) {
   	  preview_table <- previewTable()
     } else {  }
+	})
+	
+	output$reviewSettingsTable <- renderTable({
+	  if(rv$show_review_settings_table) {
+	    settings_table <- settingsTable() 
+	  } else {  }
 	})
 
 	output$renamePreviewHeader <- renderText({

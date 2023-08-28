@@ -1,4 +1,4 @@
-# Updated Nov 2022.
+# Updated Aug 2023.
 # Function definitions for the Shiny_PNW-Cnet app.
 
 # Extract short clips from longer wav files. Assumes clips are 12 s in length.
@@ -131,8 +131,8 @@ correctPath <- function(raw_path) {
 makeImageDir <- function(target_dir, output_dir) {
   target_dir <- correctPath(target_dir)
   output_dir <- correctPath(output_dir)
-  target_dir_name = basename(target_dir)
-  image_dir = file.path(output_dir, target_dir_name, "images")
+  target_dir_name <- basename(target_dir)
+  image_dir <- file.path(output_dir, target_dir_name, "images")
   return(image_dir)
 }
 
@@ -166,15 +166,15 @@ makeSpectroDirList <- function(wav_list, out_dir, n_chunks) {
 
 # Function to get the rec date from properly structured filenames.
 getDate <- Vectorize(function(filename) {
-	raw_date = strsplit(filename, "_")[[1]][3]
-	rec_date = as.Date(raw_date, format="%Y%m%d")
+	raw_date <- strsplit(filename, "_")[[1]][3]
+	rec_date <- as.Date(raw_date, format="%Y%m%d")
 } )
 
 # Get the recording station from properly structured filenames. Station ID can be
 # any format but must be preceded by a dash and followed by an underscore.
 getStn <- Vectorize(function(filename) {
-	stn = regmatches(filename, regexpr("-[[:alnum:]]+?[[:punct:]]*?_", filename))
-	stn_trimmed = str_sub(stn, 2, -2) # Remove leading "-" and trailing "_"
+	stn <- regmatches(filename, regexpr("-[[:alnum:]]+?[[:punct:]]*?_", filename))
+	stn_trimmed <- str_sub(stn, 2, -2) # Remove leading "-" and trailing "_"
 	sprintf("Stn_%s", stn_trimmed)
 } )
 
@@ -183,9 +183,14 @@ getStrWeek <- Vectorize(function(num_week) {
 	sprintf("Week_%02d", num_week)
 } )
 
+getStrDay <- Vectorize(function(num_day, n_digits) {
+  sprintf("Day_%s", 
+          str_pad(as.character(num_day), n_digits, pad="0", side="left"))
+})
+
 # Search a directory tree for files with the right extension and return a list.
 findFiles <- function(top_dir, extension) {
-	files = list.files(path = top_dir,
+	files <- list.files(path = top_dir,
 						pattern = sprintf("%s$", extension),
 						recursive = TRUE,
 						full.names = TRUE,
@@ -195,30 +200,30 @@ findFiles <- function(top_dir, extension) {
 
 # Returns the basename of the source file of a part_xxx.wav file.
 getSrcFile <- Vectorize(function(filename) {
-	src_file = sprintf("%s.wav", str_split(filename, "_part_")[[1]][1])
+	src_file <- sprintf("%s.wav", str_split(filename, "_part_")[[1]][1])
 	return(src_file)
 })
 
 getStrPart <- Vectorize(function(filename) {
-  part = regmatches(filename, regexpr("part_[[:digit:]]*?.png", filename))
-  str_part = str_sub(part, 1, -5)
+  part <- regmatches(filename, regexpr("part_[[:digit:]]*?.png", filename))
+  str_part <- str_sub(part, 1, -5)
   return(str_part)
 })
 
 # Replaces the above; allows for part numbers >999 (for very long wav files).
 getOffset <- function(filename) {
-  part = regmatches(filename, regexpr("part_[[:digit:]]*?.png", filename))
-  num_part = as.integer(str_sub(part, 6, -5))
-  offs = 12*(num_part - 1)
+  part <- regmatches(filename, regexpr("part_[[:digit:]]*?.png", filename))
+  num_part <- as.integer(str_sub(part, 6, -5))
+  offs <- 12*(num_part - 1)
   return(offs)
 }
 
 # Converts seconds to mm:ss string
 getStrOffset <- Vectorize(function(offs) {
-	hrs = floor(offs / 3600)
-	mins = floor(offs / 60) - (hrs * 60)
-	secs = offs - (hrs * 3600) - (mins * 60)
-	str_offs = ifelse(hrs > 0, sprintf("%02d:%02d:%02d", hrs, mins, secs),
+	hrs <- floor(offs / 3600)
+	mins <- floor(offs / 60) - (hrs * 60)
+	secs <- offs - (hrs * 3600) - (mins * 60)
+	str_offs <- ifelse(hrs > 0, sprintf("%02d:%02d:%02d", hrs, mins, secs),
 	                  sprintf("%02d:%02d", mins, secs))
 	return(str_offs)
 })
@@ -226,8 +231,8 @@ getStrOffset <- Vectorize(function(offs) {
 # Populate the FOLDER column in a Kaleidoscope review file; yields a subfolder
 # relative to [in_dir].
 getFolder <- Vectorize(function(file_path, in_dir) {
-	dir = dirname(file_path)
-	folder = str_sub(str_split(dir, in_dir)[[1]][-1], 2, -1)
+	dir <- dirname(file_path)
+	folder <- str_sub(str_split(dir, in_dir)[[1]][-1], 2, -1)
 	return(folder)
 })
 
@@ -243,13 +248,11 @@ getDuration <- Vectorize(function(path) {
 # listing the clips that need to be validated. Optionally, can create a review 
 # file that can be reviewed using Kaleidoscope (Pro or Lite) without the need to
 # extract short clips.
-# Also creates a "Detection_Summary" file listing number of apparent detections
-# of each class at each station by week across a range of detection thresholds.
 makeReviewFile <- function(predfile, outputmode="kscope") {
 	
 	out_dir <- dirname(predfile)
 	in_name <- basename(predfile)
-	preds <- read.csv(predfile)
+	preds <- read_csv(predfile, show_col_types = FALSE)
 	
 	field_names <- names(preds)
 	class_names <- field_names[2:length(field_names)]
@@ -307,7 +310,7 @@ makeReviewFile <- function(predfile, outputmode="kscope") {
 }
 
 # Creates a file that imitates the files created by the clustering function in 
-# Kaleidoscope and can be read by the same program. 
+# Kaleidoscope and can be read by the same program.
 makeKscopeTable <- function(review_df, input_dir) {
 	review_df$TOP1DIST <- sapply(seq_len(nrow(review_df)),
 							  function(i) { review_df[i, review_df$Sortlabel[[i]], 
@@ -328,7 +331,7 @@ makeKscopeTable <- function(review_df, input_dir) {
 	output_df <- left_join(x = workdf, y = wavs, by = "INFILEUPPER") 
 	
 	output_df <- output_df %>% 
-	  mutate(FOLDER = getFolder(output_df$Path, in_dir=input_dir),
+	  mutate(FOLDER = getFolder(Path, input_dir),
 	         CHANNEL = 0, 
 	         DURATION = 12) %>%
 	  select(FOLDER, `IN FILE`, CHANNEL, OFFSET, DURATION, TOP1MATCH,
@@ -338,6 +341,99 @@ makeKscopeTable <- function(review_df, input_dir) {
 	  mutate(VOCALIZATIONS = 1, `MANUAL ID` = '', .after=PART)
 	
 	return(output_df)
+}
+
+# Creates tables for both the _review and _review_kscope files including a 
+# customizable set of target classes and corresponding score thresholds.
+# Detections can be grouped daily or weekly. This basically supersedes both
+# makeReviewFile() and makeKscopeTable().
+makeCustomKscopeTable <- function(pred_path, class_df, timescale="Weekly") {
+  time_group <- ifelse(timescale == "Daily", "Date", "Week")
+  input_dir <- dirname(pred_path) 
+  in_name <- basename(pred_path)
+  
+  wavs <- data.frame("Path" = findFiles(input_dir, ".wav")) %>% 
+    mutate(`IN FILE` = basename(Path),
+           INFILEUPPER = toupper(`IN FILE`))
+  
+  # Read the prediction file and add date fields
+  pred_df <- read_csv(pred_path, show_col_types=FALSE)
+  pred_classes <- names(pred_df)[2:ncol(pred_df)]
+  pred_df <- pred_df %>%
+    mutate(RecDate = getDate(Filename),
+           day1 = min(RecDate))
+
+  target_classes <- class_df %>% filter(Class %in% pred_classes) %>% pull(Class)
+
+  # Filter the full set of predictions to just the lines that meet the score 
+  # threshold for >1 class
+  done <- character()
+  for(i in seq_along(target_classes)) {
+    class_name <- target_classes[i]
+    threshold <- class_df %>% filter(Class == class_name) %>% pull(Threshold)
+    new_dets <- pred_df %>% 
+      filter(get(class_name) >= threshold,
+             !(Filename %in% done)) %>% 
+      mutate(TOP1MATCH = class_name,
+             TOP1DIST = get(class_name),
+             Threshold = threshold)
+    done <- c(done, pull(new_dets, Filename))
+    if(i == 1) {
+      dets <- new_dets
+    } else {
+      dets <- bind_rows(dets, new_dets)
+    }
+  }
+
+  # Add all the columns up front so we can use Select() to pare it down later.
+  if(nrow(dets) == 0) {
+    return()
+  } else {
+    dets <- dets %>%
+      mutate(Week = getStrWeek(floor((RecDate - day1) / 7) + 1),
+             Day = RecDate - day1 + 1,
+             Stn = getStn(Filename),
+             OFFSET = getOffset(Filename), 
+             INFILEUPPER = toupper(getSrcFile(Filename)),
+             PART = getStrPart(Filename),
+             MMSS = getStrOffset(OFFSET),
+             CHANNEL = 0,
+             DURATION = 12) %>% 
+      left_join(wavs, by = "INFILEUPPER") %>% 
+      mutate(FOLDER = getFolder(Path, input_dir))
+    
+    # Add the SORT column combining top class, stn, and time group (day or week)
+    if(time_group=="Date") {
+      max_date <- max(dets$Day)
+      n_digits <- floor(log10(max_date)) + 1
+      dets <- dets %>% mutate(Day = getStrDay(Day, n_digits),
+                              SORT = sprintf("%s_%s_%s", TOP1MATCH, Stn, Day))
+    } else {
+      dets <- dets %>% mutate(SORT = sprintf("%s_%s_%s", TOP1MATCH, Stn, Week))
+    }
+    
+    # Create the _review table (just the filtered CNN_Predictions file with a few
+    # extra columns)
+    review_df <- dets %>% 
+      select(Filename, all_of(pred_classes), Stn, Week, TOP1MATCH, Threshold) %>% 
+      rename(Sortlabel = TOP1MATCH) %>% 
+      arrange(Sortlabel, Stn, Week, Filename)
+    
+    # Create the review_kscope table (readable by Kaleidoscope)
+    kscope_df <- dets %>% 
+      select(FOLDER, `IN FILE`, CHANNEL, OFFSET, DURATION, TOP1MATCH,
+             TOP1DIST, Threshold, MMSS, SORT, PART) %>%
+      mutate(Fmin='', Fmean='', Fmax='', DATE='', TIME='', HOUR='', `DATE-12`='',
+             `TIME-12`='', `HOUR-12`='', .before=TOP1MATCH) %>%
+      mutate(VOCALIZATIONS = 1,
+             `MANUAL ID` = '',
+             .after=PART) %>% 
+      arrange(SORT, `IN FILE`, PART)
+    
+    # Return both the regular review file dataframe and the review_kscope frame;
+    # list can be indexed with result[[1]] and result[[2]]
+    return(list(review_df, kscope_df))
+  }
 }
 
 # Extracts short WAV files to be validated manually. Will be sorted into subfolders
@@ -381,9 +477,9 @@ extractWavs <- function(review_file, top_dir, sox_path) {
 }
 
 # Just filters out the wav files produced by extractWavs so we don't reprocess them.
-rmParts <- function(fname) {
-	if (str_detect(fname, "_part_")) { FALSE } else { TRUE }
-}
+# rmParts <- function(fname) {
+# 	if (str_detect(fname, "_part_")) { FALSE } else { TRUE }
+# }
 
 # Builds a table of apparent detections by station and week across a range of 
 # detection thresholds based on a set of CNN predictions.
