@@ -257,7 +257,8 @@ makeReviewFile <- function(predfile, outputmode="kscope") {
 	field_names <- names(preds)
 	class_names <- field_names[2:length(field_names)]
 	
-	preds <- preds %>% mutate(RecDate = getDate(Filename)) %>% 
+	preds <- preds %>% 
+	  mutate(RecDate = getDate(Filename)) %>% 
 	  mutate(day1 = min(RecDate)) %>% 
 	  mutate(Week = getStrWeek(floor((RecDate - day1) / 7) + 1),
 	         Stn = getStn(Filename)) %>% 
@@ -345,11 +346,11 @@ makeKscopeTable <- function(review_df, input_dir) {
 
 # Creates tables for both the _review and _review_kscope files including a 
 # customizable set of target classes and corresponding score thresholds.
-# Detections can be grouped daily or weekly. This basically supersedes both
+# Detections can be grouped daily or weekly. This pretty much supersedes both
 # makeReviewFile() and makeKscopeTable().
 makeCustomKscopeTable <- function(pred_path, class_df, timescale="Weekly") {
   time_group <- ifelse(timescale == "Daily", "Date", "Week")
-  input_dir <- dirname(pred_path) 
+  input_dir <- dirname(pred_path)
   in_name <- basename(pred_path)
   
   wavs <- data.frame("Path" = findFiles(input_dir, ".wav")) %>% 
@@ -362,15 +363,21 @@ makeCustomKscopeTable <- function(pred_path, class_df, timescale="Weekly") {
   pred_df <- pred_df %>%
     mutate(RecDate = getDate(Filename),
            day1 = min(RecDate))
-
-  target_classes <- class_df %>% filter(Class %in% pred_classes) %>% pull(Class)
+  
+  # Only look for classes that actually appear in the prediction dataframe
+  target_classes <- class_df %>% 
+    filter(Class %in% pred_classes) %>% 
+    pull(Class)
 
   # Filter the full set of predictions to just the lines that meet the score 
-  # threshold for >1 class
+  # threshold for at least one class
   done <- character()
   for(i in seq_along(target_classes)) {
     class_name <- target_classes[i]
-    threshold <- class_df %>% filter(Class == class_name) %>% pull(Threshold)
+    threshold <- class_df %>% 
+      filter(Class == class_name) %>% 
+      distinct(Class, Threshold) %>% 
+      pull(Threshold)
     new_dets <- pred_df %>% 
       filter(get(class_name) >= threshold,
              !(Filename %in% done)) %>% 
@@ -495,12 +502,12 @@ buildDetTable <- function(predictions) {
 	thresh_list <- c(seq(from=0.05, to=0.95, by=0.05), 0.98, 0.99)
 
 	det_table <- predictions %>% filter(FALSE) %>% 
-	select(Station, Rec_Date, Week, AEAC:ZEMA) %>% 
-	mutate(Threshold = NA, .before = AEAC)
+	select(Station, Rec_Date, Week, all_of(class_names)) %>% 
+	mutate(Threshold = NA, .before = first(class_names))
 
 	for(thresh in thresh_list) {
 	dets <- predictions %>% group_by(Station, Rec_Date, Week) %>% 
-	  summarize(across(AEAC:ZEMA, function(x) length(which(x >= thresh))),
+	  summarize(across(all_of(class_names), function(x) length(which(x >= thresh))),
 				.groups = "keep") %>% 
 	  mutate(Threshold = sprintf("%.2f", thresh), .after = Week)
 	  det_table <- rbind(det_table, dets)

@@ -1,6 +1,6 @@
-# Updated Aug 2023.
-# Makes use of PNW-Cnet version 4 (51-class). See ./target_classes.csv for 
-# descriptions of each class.
+# Updated Sep 2023.
+# Makes use of PNW-Cnet version 4 (51 classes) or version 5 (135 classes). See 
+# ./Target_Classes.csv for descriptions of each class.
 
 library(lubridate)
 library(parallel)
@@ -15,30 +15,49 @@ if(!file.exists("./settings")) {
 
 source("./settings")
 source("./functions.r")
-source_python("./scripts/pnw-cnet_v4_predict.py")
+source_python("./scripts/PNW-Cnet_predict.py")
 
 ncores_logical <- detectCores()
 ncores_physical <- detectCores(logical = FALSE)
-
-model_path <- "./PNW-Cnet_v4_TF.h5"
 
 # Change the following line if you installed SoX in a different location.
 sox_dir <- "C:/Program Files (x86)/sox-14-4-2"
 sox_path <- file.path(sox_dir, "sox")
 
-class_desc <- read_csv("./target_classes.csv", show_col_types = FALSE)
-class_list <- class_desc %>% 
-  mutate(Str_Class = paste0(Class, " - ", Sound)) %>% 
-  pull(Str_Class)
-class_names <- class_desc %>% pull(Class)
+# Setting up to run with either version of PNW-Cnet (v4 or v5)
+v4_model_path <- "./PNW-Cnet_v4_TF.h5"
+v5_model_path <- "./PNW-Cnet_v5_TF.h5"
 
-nso_classes <- c("STOC", "STOC_IRREG")
-non_nso_classes <- class_names[!(class_names %in% nso_classes)]
-default_review_settings <- data.frame(Class = c(nso_classes, non_nso_classes),
-                                      Threshold = c(rep(0.25, length(nso_classes)),
-                                                    rep(0.95, length(non_nso_classes)))) %>% 
-  inner_join(class_desc, by = "Class") %>% 
-  select(Class, Sound, Threshold)
+class_desc <- read_csv("./Target_Classes.csv", show_col_types = FALSE)
+class_categories <- class_desc %>% distinct(Category) %>% pull(Category)
+class_orders <- class_desc %>% distinct(Order) %>% pull(Order)
+
+v4_class_desc <- class_desc %>% filter(Version == "v4")
+v5_class_desc <- class_desc %>% filter(Version == "v5")
+
+v4_class_names <- v4_class_desc %>% pull(Class)
+v5_class_names <- v5_class_desc %>% pull(Class)
+
+v4_class_list <- v4_class_desc %>% 
+    mutate(Str_Class = paste0(Class, " - ", Sound)) %>%
+    pull(Str_Class)
+
+v5_class_list <- v5_class_desc %>% 
+  mutate(Str_Class = paste0(Class, " - ", Sound)) %>%
+  pull(Str_Class)
+
+class_list <- list("v4" = v4_class_list, "v5" = v5_class_list)
+
+# class_list <- class_desc %>% 
+#   mutate(Str_Class = paste0(Class, " - ", Sound)) %>% 
+#   pull(Str_Class)
+
+nso_classes <- c("STOC", "STOC_IRREG", "STOC_4Note", "STOC_Series")
+
+default_review_settings <- class_desc %>% 
+  mutate(Threshold = ifelse(Class %in% nso_classes, 0.25, 0.95)) %>% 
+  arrange(Version, desc(Class %in% nso_classes), Class) %>% 
+  select(Version, Class, Sound, Threshold)
 
 ui <- fluidPage(
 	useShinyjs(),
@@ -55,6 +74,8 @@ ui <- fluidPage(
 		  tabsetPanel(
 		    id = "controls",
 		    type = "hidden",
+		    
+		    ##### INPUT CONTROL PANEL #####
 		    tabPanelBody("inputControlPanel",
       		textInput("topdir", h5("Copy and paste (recommended) or type target directory path into box and click Check Directory:"),
       		          placeholder = "F:\\Path\\to\\directory"),
@@ -76,11 +97,13 @@ ui <- fluidPage(
       		actionButton("settingsButton", "Settings and Utilities")
 		    ),
 		    
+		    ##### EXPLORE CONTROL PANEL #####
 		    tabPanelBody("exploreControlPanel",
 		      textOutput({"exploreTitle"}),
 		      h5(" Select a target class and a detection threshold to see apparent detections plotted by station over time."),
-		      selectInput("class_selection", label = "Target class",
-		                  choices = class_list),
+		      # selectInput("class_selection", label = "Target class",
+		      #             choices = class_list),
+		      uiOutput("selectPlotClass"),
 		      
 		      selectInput("plot_threshold", label = "Detection threshold",
 		                  choices = c("0.99", "0.98", "0.95", "0.90", "0.85", "0.80",
@@ -97,8 +120,17 @@ ui <- fluidPage(
 		      br(),
 		      actionButton("backButton", label = "Back to inputs"),
 		    ),
+		    
+		    ##### SETTINGS CONTROL PANEL #####
 		    tabPanelBody("settingsControlPanel",
                      h3("Settings and Utilities"),
+		                 h5("_______________________________"),
+		                 h4("Neural net version"),
+		                 radioButtons(inputId = "pnw_cnet_version",
+		                              label = h5("Choose which version of PNW-Cnet to use to generate class scores:"),
+		                              choices = list("Use PNW-Cnet v5 (135 target classes)" = "v5",
+		                                             "Use PNW-Cnet v4 (51 target classes)" = "v4"),
+		                              selected = "v5"),
 		                 h5("_______________________________"),
 		                 h4("Image directory"),
 		                 textInput("customOutputDir",
@@ -373,7 +405,12 @@ server <- function(input, output, session) {
     
 	  total_duration <- sum(sapply(wavs, getDuration)) / 3600
 		
-    cnn_path <- model_path
+	  if(input$pnw_cnet_version == "v5") {
+      model_path <- v5_model_path
+	  } else {
+	    model_path <- v4_model_path
+	  }
+	  
 		target_dir <- correctedDir()
     custom_output_dir <- correctedOutputDir()
     
@@ -404,7 +441,10 @@ server <- function(input, output, session) {
 		
 		if(length(pngs) > 0) {
 			cat(sprintf("\nImage data already present in %s.\n", image_dir))
+		  grams_generated <- FALSE
+		  spectro_end_time <- Sys.time()
 		} else {
+		  grams_generated <- TRUE
 		  use_cores <- rv$use_cores
 		  cat(sprintf("\nSpectrograms will be created in %s.\n", image_dir))
 		  cat(sprintf("\nGenerating spectrograms using %d nodes starting at %s... \n", 
@@ -424,23 +464,24 @@ server <- function(input, output, session) {
 		
 		predict_start_time <- Sys.time()
 		
-		cat(sprintf("\nProceeding to CNN classification at %s...\n", 
+		cat(sprintf("\nGenerating class scores using PNW-Cnet %s starting at %s...\n", 
+		            input$pnw_cnet_version,
 		            format(predict_start_time, "%X")))
 		
 		cat("\n(The following warnings from TensorFlow are expected and can be safely ignored.)\n")
 		
-		# Classify spectrograms, write predictions to output file
-		predictions <- makePredictions(image_dir, cnn_path) %>% 
-		  mutate(across(AEAC:ZEMA, function(x) 
-		    round(x, digits=5)))
+		# Generate class scores and write them to the output file
+		predictions <- makePredictions(image_dir, model_path, show_prog = TRUE)
+		pred_classes <- names(predictions)[2:ncol(predictions)]
+    
+	  predictions <- predictions %>% 
+		  mutate(across(all_of(pred_classes), function(x) round(x, digits=5)))
 		
 		output_file <- file.path(target_dir, sprintf("CNN_Predictions_%s.csv", outname))
 		write_csv(predictions, output_file)
 		
 		predict_end_time <- Sys.time()
 		
-		cat(sprintf("\nFinished at %s.\n", 
-		            format(predict_end_time, "%X")))
 		cat(sprintf("\nClass scores written to %s in folder %s.\n", 
 		            basename(output_file), target_dir))
 		
@@ -456,7 +497,14 @@ server <- function(input, output, session) {
 		  round(digits=1) %>% 
 		  format(big.mark=",")
 		
-		cat(sprintf("\nSuccessfully processed %s hours of data in %.1f hours (ratio: %.1f).\n",
+		if(grams_generated) {
+		  cat(sprintf("\nSpectrogram generation start: %s", format(spectro_start_time, "%X")))
+		  cat(sprintf("\nSpectrogram generation end: %s", format(predict_start_time, "%X")))
+		}
+		cat(sprintf("\nPrediction start: %s", format(predict_start_time, "%X")))
+		cat(sprintf("\nPrediction end: %s", format(predict_end_time, "%X")))
+		
+		cat(sprintf("\n\nSuccessfully processed %s hours of data in %.1f hours (ratio: %.1f).\n",
 		            total_duration_pretty, run_time, total_duration / run_time))
 		
 		if(input$deleteSpectrogramsWhenDone) {
@@ -509,7 +557,7 @@ server <- function(input, output, session) {
 		
 	  nrevlines <- nrow(review_table)
     if(nrevlines == 0) {
-      cat("\nPrediction file contains no potential detections. No review file created.\n")
+      cat("\nPrediction file contains 0 potential detections. No review file created.\n")
     } else {
       review_table %>% write_csv(review_path)
       kscope_table %>% write_csv(kscope_path)
@@ -540,7 +588,7 @@ server <- function(input, output, session) {
     
     det_lines <- makeCustomKscopeTable(pred_file, rev_df, timescale)[[2]]
     
-    if(nrow(det_lines) == 0){
+    if(nrow(det_lines) == 0) {
       cat("Zero detections at this threshold. File not generated.\n")
     } else {
       out_name <- in_name %>% str_replace("CNN_Predictions_", "") %>%
@@ -646,7 +694,7 @@ server <- function(input, output, session) {
 	  }
 	})
 	
-	detTable <- eventReactive(input$exploreDetsButton, {
+	detTable <- eventReactive(input$checkdirbutton, {
 	  req(getSummaryFile())
     read_csv(getSummaryFile(), show_col_types = FALSE) %>% 
       mutate(Threshold = sprintf("%.2f", Threshold))
@@ -671,6 +719,10 @@ server <- function(input, output, session) {
 	  } else { }
 	})
 
+	detPlotChoices <- eventReactive(input$pnw_cnet_version, {
+	  show_class_list <- class_list[input$pnw_cnet_version]
+	})
+	
 	output$wavsFound <- renderText({
 		if (checkDir() == "invalid") { 
 			"Invalid directory." } else {
@@ -702,7 +754,8 @@ server <- function(input, output, session) {
 	settingsTable <- eventReactive(input$showReviewSettingsButton, {
 	  settings_file <- getReviewSettingsFile()
 	  if(input$useReviewSettings == "default" | settings_file == "") {
-	    settings_table <- default_review_settings
+	    settings_table <- default_review_settings %>% 
+	      filter(Version == input$pnw_cnet_version)
 	  } else {
 	    settings_table <- read_csv(settings_file, show_col_types = FALSE) %>% 
 	      select(Class, Threshold) %>% 
@@ -816,6 +869,7 @@ server <- function(input, output, session) {
 
 	output$detectionPlot <- renderPlot({
 	  req(detTable())
+	  req(detPlotChoices())
 	  target_class <- str_split(input$class_selection, " - ")[[1]][1]
 	  thresh <- input$plot_threshold
 	  timescale <- input$plot_timescale
@@ -851,6 +905,13 @@ server <- function(input, output, session) {
 	                 label="Undo Renaming",
 	                 disabled=TRUE)
 	  }
+	})
+	
+	output$selectPlotClass <- renderUI({
+	  req(detTable())
+	  selectInput("class_selection",
+	              label="Target class",
+	              choices=detPlotChoices())
 	})
 
 }
