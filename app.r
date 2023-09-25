@@ -29,28 +29,11 @@ v4_model_path <- "./PNW-Cnet_v4_TF.h5"
 v5_model_path <- "./PNW-Cnet_v5_TF.h5"
 
 class_desc <- read_csv("./Target_Classes.csv", show_col_types = FALSE)
-class_categories <- class_desc %>% distinct(Category) %>% pull(Category)
-class_orders <- class_desc %>% distinct(Order) %>% pull(Order)
 
-v4_class_desc <- class_desc %>% filter(Version == "v4")
-v5_class_desc <- class_desc %>% filter(Version == "v5")
-
-v4_class_names <- v4_class_desc %>% pull(Class)
-v5_class_names <- v5_class_desc %>% pull(Class)
-
-v4_class_list <- v4_class_desc %>% 
-    mutate(Str_Class = paste0(Class, " - ", Sound)) %>%
-    pull(Str_Class)
-
-v5_class_list <- v5_class_desc %>% 
-  mutate(Str_Class = paste0(Class, " - ", Sound)) %>%
-  pull(Str_Class)
-
-class_list <- list("v4" = v4_class_list, "v5" = v5_class_list)
-
-# class_list <- class_desc %>% 
-#   mutate(Str_Class = paste0(Class, " - ", Sound)) %>% 
-#   pull(Str_Class)
+class_cats <- class_desc %>% 
+  distinct(Subcategory) %>% 
+  arrange(Subcategory) %>% 
+  pull(Subcategory)
 
 nso_classes <- c("STOC", "STOC_IRREG", "STOC_4Note", "STOC_Series")
 
@@ -96,24 +79,24 @@ ui <- fluidPage(
       		h5("Click Settings and Utilities to configure the app's behavior and find tools to assist in audio processing."),
       		actionButton("settingsButton", "Settings and Utilities")
 		    ),
-		    
+
 		    ##### EXPLORE CONTROL PANEL #####
 		    tabPanelBody("exploreControlPanel",
 		      textOutput({"exploreTitle"}),
 		      h5(" Select a target class and a detection threshold to see apparent detections plotted by station over time."),
-		      # selectInput("class_selection", label = "Target class",
-		      #             choices = class_list),
 		      uiOutput("selectPlotClass"),
 		      
+		      uiOutput("selectClassCategories"),
+
 		      selectInput("plot_threshold", label = "Detection threshold",
 		                  choices = c("0.99", "0.98", "0.95", "0.90", "0.85", "0.80",
 		                              "0.75", "0.70", "0.65", "0.60", "0.55", "0.50",
 		                              "0.45", "0.40", "0.35", "0.30", "0.25", "0.20",
 		                              "0.15", "0.10", "0.05"), selected = "0.95"),
-		      
+
 		      selectInput("plot_timescale", label = "Summarize detections...",
 		                  choices = c("Weekly", "Daily")),
-		      
+
 		      h5("Click Create single-class review file to generate a file listing apparent detections for the chosen class at the selected threshold."),
 		      
 		      actionButton("singleClassReviewButton", "Create single-class review file"),
@@ -220,6 +203,9 @@ server <- function(input, output, session) {
   rv$show_review_settings_table <- FALSE
   rv$files_renamed <- FALSE
   rv$use_cores <- detectCores()
+  rv$visible_classes <- class_desc %>%
+    mutate(Str_Class = paste0(Class, " - ", Sound)) %>%
+    pull(Str_Class)
   
   # Change from Input tab to Explore tab.
   switchTabs1 <- observeEvent(input$exploreDetsButton, {
@@ -312,6 +298,14 @@ server <- function(input, output, session) {
 	  if (revfile != "") {
 	    toggleState(id = "extractWavsButton", condition = TRUE)} else {
 	      toggleState(id = "extractWavsButton", condition = FALSE) }
+	})
+	
+	updateVisibleClasses <- observeEvent(input$class_categories, {
+	  rv$visible_classes <- class_desc %>% 
+	    filter(Subcategory %in% input$class_categories, 
+	           Version == input$pnw_cnet_version) %>% 
+	    mutate(Str_Class = paste0(Class, " - ", Sound)) %>%
+	    pull(Str_Class)
 	})
 	
 	showPreviewTable <- observeEvent(input$showPreviewButton, {
@@ -516,7 +510,7 @@ server <- function(input, output, session) {
 		
 		showModal(modalDialog(title = "Processing complete",
 		                      "Audio processing complete. Class scores written to file.",
-		                      size = "m",
+		                      size = "l",
 		                      footer = modalButton("Dismiss"),
 		                      easyClose = TRUE))
 
@@ -718,10 +712,6 @@ server <- function(input, output, session) {
 	    updateTabsetPanel(inputId = "mainTabs", selected = "exploreMainPanel")
 	  } else { }
 	})
-
-	detPlotChoices <- eventReactive(input$pnw_cnet_version, {
-	  show_class_list <- class_list[input$pnw_cnet_version]
-	})
 	
 	output$wavsFound <- renderText({
 		if (checkDir() == "invalid") { 
@@ -868,8 +858,7 @@ server <- function(input, output, session) {
 	})
 
 	output$detectionPlot <- renderPlot({
-	  req(detTable())
-	  req(detPlotChoices())
+	  # req(detTable())
 	  target_class <- str_split(input$class_selection, " - ")[[1]][1]
 	  thresh <- input$plot_threshold
 	  timescale <- input$plot_timescale
@@ -907,11 +896,18 @@ server <- function(input, output, session) {
 	  }
 	})
 	
+	output$selectClassCategories <- renderUI({
+	  checkboxGroupInput("class_categories",
+	                     label="Filter classes by category",
+	                     choices=class_cats,
+	                     selected="Owls")
+	})
+	
 	output$selectPlotClass <- renderUI({
 	  req(detTable())
 	  selectInput("class_selection",
 	              label="Target class",
-	              choices=detPlotChoices())
+	              choices=rv$visible_classes)
 	})
 
 }

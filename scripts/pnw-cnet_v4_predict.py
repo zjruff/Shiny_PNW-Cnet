@@ -11,7 +11,7 @@ import tensorflow as tf
 # than writing the predictions to a CSV file and then reading it into R.
 # DataFrame has one column Filename for image filenames (not full paths) and 51
 # columns AEAC:ZEMA for the class scores.
-def makePredictions(target_dir, model_path):
+def makePredictions(target_dir, model_path, show_prog = False):
     class_names = ['AEAC', 'BRCA', 'BRMA', 'BUVI', 'CAGU', 'CALU', 'CAUS', 'CCOO', 
                     'CHFA', 'CHMI', 'CHMI_IRREG', 'COAU', 'COAU2', 'COCO', 'CYST', 
                     'DEFU', 'DOG', 'DRPU', 'DRUM', 'FLY', 'FROG', 'GLGN', 'HOSA', 
@@ -51,9 +51,9 @@ def makePredictions(target_dir, model_path):
     # been compiled, which can be safely ignored.
     pnw_cnet_model = tf.keras.models.load_model(model_path)
 
-    # The nice progress bar you get with verbose=1 sadly doesn't work right when
-    # running this function in R, so we had to leave it out :/
-    class_scores = pnw_cnet_model.predict(predict_gen, verbose = 0)
+    # Progress bar is kind of obnoxious when running in RStudio (prints a separate
+    # line for each step) but still probably helpful on balance. 
+    class_scores = pnw_cnet_model.predict(predict_gen, verbose = 1 if show_prog else 0)
 
     predictions = pd.DataFrame(data = class_scores, columns = class_names)
     predictions.insert(loc = 0, column = "Filename", 

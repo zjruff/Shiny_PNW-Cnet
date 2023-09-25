@@ -1,187 +1,187 @@
-Version,Class,Sound,Species,Category,Order
-v4,AEAC,Northern saw-whet owl,Aegolius acadicus,Owl,Strigiformes
-v4,BRCA,Canada goose,Branta canadensis,Game bird,Anseriformes
-v4,BRMA,Marbled murrelet,Brachyramphus marmoratus,Other bird,Charadriiformes
-v4,BUVI,Great horned owl,Bubo virginianus,Owl,Strigiformes
-v4,CAGU,Hermit thrush,Catharus guttatus,Songbird,Passeriformes
-v4,CALU,Wolf howl,Canis lupus,Mammal,Carnivora
-v4,CAUS,Swainson's thrush,Catharus ustulatus,Songbird,Passeriformes
-v4,CCOO,Olive-sided flycatcher,Contopus cooperi,Songbird,Passeriformes
-v4,CHFA,Wrentit,Chamaea fasciata,Songbird,Passeriformes
-v4,CHMI,Common nighthawk call,Chordeiles minor,Other bird,Caprimulgiformes
-v4,CHMI_IRREG,Common nighthawk boom,Chordeiles minor,Other bird,Caprimulgiformes
-v4,COAU,Northern flicker series,Colaptes auratus,Woodpecker,Piciformes
-v4,COAU2,Northern flicker 'skew',Colaptes auratus,Woodpecker,Piciformes
-v4,COCO,Common raven,Corvus corax,Corvid,Passeriformes
-v4,CYST,Steller's jay,Cyanocitta stelleri,Corvid,Passeriformes
-v4,DEFU,Sooty grouse,Dendragapus fuliginosus,Game bird,Galliformes
-v4,DOG,Dog barks,NA,Nuisance,NA
-v4,DRPU,Downy woodpecker call,Dryobates pubescens,Woodpecker,Piciformes
-v4,DRUM,Woodpecker spp. drum,NA,Woodpecker,Piciformes
-v4,FLY,Insect buzz,NA,Nuisance,NA
-v4,FROG,Frog chorus,NA,Nuisance,NA
-v4,GLGN,Northern pygmy-owl,Glaucidium gnoma,Owl,Strigiformes
-v4,HOSA,Human speech,NA,Nuisance,NA
-v4,HYPI,Pileated woodpecker call,Dryocopus pileatus,Woodpecker,Piciformes
-v4,INSP,Barred owl inspection call,Strix varia,Owl,Strigiformes
-v4,IXNA,Varied thrush,Ixoreus naevius,Songbird,Passeriformes
-v4,MEKE,Western screech-owl,Megascops kennicotti,Owl,Strigiformes
-v4,MYTO,Townsend's solitaire,Myadestes townsendi,Songbird,Passeriformes
-v4,NUCO,Clark's nutcracker,Nucifraga columbiana,Songbird,Passeriformes
-v4,OCPR,American pika,Ochotona princeps,Mammal,Lagomorpha
-v4,ORPI,Mountain quail,Oreortyx pictus,Game bird,Galliformes
-v4,PAFA,Band-tailed pigeon,Patagioenas fasciata,Game bird,Columbiformes
-v4,PECA,Canada jay,Perisoreus canadensis,Corvid,Passeriformes
-v4,PHNU,Common poorwill,Phalaenoptilus nuttallii,Other bird,Caprimulgiformes
-v4,PIMA,Spotted towhee,Pipilo maculatus,Songbird,Passeriformes
-v4,POEC,Chickadee song,Poecile sp.,Songbird,Passeriformes
-v4,PSFL,Flammulated owl,Psiloscops flammeolus,Owl,Strigiformes
-v4,SHOT,Gunshot,NA,Nuisance,NA
-v4,SITT,Nuthatch,Sitta sp.,Songbird,Passeriformes
-v4,SPRU,Sapsucker drum,Sphyrapicus spp.,Woodpecker,Piciformes
-v4,STOC,Spotted owl location call,Strix occidentalis,Owl,Strigiformes
-v4,STOC_IRREG,Spotted owl series call,Strix occidentalis,Owl,Strigiformes
-v4,STVA,Barred owl eight-note call,Strix varia,Owl,Strigiformes
-v4,STVA_IRREG,Barred owl series call,Strix varia,Owl,Strigiformes
-v4,TADO1,Douglas' squirrel rattle,Tamasciurus douglasii,Mammal,Rodentia
-v4,TADO2,Douglas' squirrel chirp,Tamasciurus douglasii,Mammal,Rodentia
-v4,TAMI,Chipmunk chirp,Neotamias sp.,Mammal,Rodentia
-v4,TUMI,American robin whinny,Turdus migratorius,Songbird,Passeriformes
-v4,WHIS,Strix owl contact whistle,Strix sp.,Owl,Strigiformes
-v4,YARD,Yarder (machine),NA,Nuisance,NA
-v4,ZEMA,Mourning dove,Zenaida macroura,Game bird,Columbiformes
-v5,BRCA1,Canada goose,Branta canadensis,Bird,Anseriformes
-v5,BOUM1,Ruffed grouse,Bonasa umbellus,Bird,Galliformes
-v5,CACA1,California quail,Callipepla californica,Bird,Galliformes
-v5,DEFU1,Sooty grouse,Dendragapus fuliginosus,Bird,Galliformes
-v5,DEFU2,Sooty grouse,Dendragapus fuliginosus,Bird,Galliformes
-v5,MEGA1,Wild turkey,Meleagris gallapavo,Bird,Galliformes
-v5,ORPI1,Mountain quail,Oreortyx pictus,Bird,Galliformes
-v5,ORPI2,Mountain quail,Oreortyx pictus,Bird,Galliformes
-v5,PAFA1,Band-tailed pigeon,Patagioenas fasciata,Bird,Columbiformes
-v5,PAFA2,Band-tailed pigeon,Patagioenas fasciata,Bird,Columbiformes
-v5,STDE1,Eurasian collared dove,Streptopelia decaocto,Bird,Columbiformes
-v5,ZEMA1,Mourning dove,Zenaida macrourus,Bird,Columbiformes
-v5,CHMI1,Common nighthawk,Chordeiles minor,Bird,Caprimulgiformes
-v5,CHMI2,Common nighthawk,Chordeiles minor,Bird,Caprimulgiformes
-v5,PHNU1,Common poorwill,Phalaenoptilus nuttallii,Bird,Caprimulgiformes
-v5,ANCA1,Sandhill crane,Antigone canadensis,Bird,Gruiformes
-v5,BRMA1,Marbled murrelet,Brachyramphus marmoratus,Bird,Charadriiformes
-v5,BRMA2,Marbled murrelet,Brachyramphus marmoratus,Bird,Charadriiformes
-v5,GADE1,Wilson's snipe,Gallinago delicata,Bird,Charadriiformes
-v5,ACCO1,Cooper's hawk,Accipiter cooperii,Bird,Accipitriformes
-v5,ACGE1,Northern goshawk,Accipiter gentilis,Bird,Accipitriformes
-v5,ACGE2,Northern goshawk,Accipiter gentilis,Bird,Accipitriformes
-v5,ACST1,Sharp-shinned hawk,Accipiter striatus,Bird,Accipitriformes
-v5,BUJA1,Red-tailed hawk,Buteo jamaicensis,Bird,Accipitriformes
-v5,BUJA2,Red-tailed hawk,Buteo jamaicensis,Bird,Accipitriformes
-v5,HALE1,Bald eagle,Haliaeetus leucocephalus,Bird,Accipitriformes
-v5,PAHA1,Osprey,Pandion haliaetus,Bird,Accipitriformes
-v5,Raptor,Raptors,Accipitrid,Bird,Accipitriformes
-v5,AEAC1,Northern saw-whet owl,Aegolius acadicus,Bird,Strigiformes
-v5,AEAC2,Northern saw-whet owl,Aegolius acadicus,Bird,Strigiformes
-v5,ASOT1,Long-eared owl,Asio otus,Bird,Strigiformes
-v5,BUVI1,Great horned owl,Bubo virginianus,Bird,Strigiformes
-v5,BUVI2,Great horned owl,Bubo virginianus,Bird,Strigiformes
-v5,GLGN1,Northern pygmy-owl,Glaucidium califonicum,Bird,Strigiformes
-v5,MEKE1,Western screech-owl,Megascops kennicottii,Bird,Strigiformes
-v5,MEKE2,Western screech-owl,Megascops kennicottii,Bird,Strigiformes
-v5,MEKE3,Western screech-owl,Megascops kennicottii,Bird,Strigiformes
-v5,PSFL1,Flammulated owl,Psiloscops flammeolus,Bird,Strigiformes
-v5,STNE1,Great grey owl,Strix nebulosa,Bird,Strigiformes
-v5,STNE2,Great grey owl,Strix nebulosa,Bird,Strigiformes
-v5,STOC_4Note,Spotted owl,Strix occidentalis,Bird,Strigiformes
-v5,STOC_Series,Spotted owl,Strix occidentalis,Bird,Strigiformes
-v5,Strix_Bark,Strix spp,Strix spp.,Bird,Strigiformes
-v5,Strix_Whistle,Strix spp,Strix spp.,Bird,Strigiformes
-v5,STVA_8Note,Barred owl,Strix varia,Bird,Strigiformes
-v5,STVA_Insp,Barred owl,Strix varia,Bird,Strigiformes
-v5,STVA_Series,Barred owl,Strix varia,Bird,Strigiformes
-v5,COAU1,Northern flicker,Colaptes auratus,Bird,Piciformes
-v5,COAU2,Northern flicker,Colaptes auratus,Bird,Piciformes
-v5,DRPU1,Downy woodpecker,Dryobates pubescens,Bird,Piciformes
-v5,Drum,Woodpecker (non-sapsucker),Picid,Bird,Piciformes
-v5,HYPI1,Pileated woodpecker,Dryocopus pileatus,Bird,Piciformes
-v5,LEAL1,White-headed woodpecker,Leuconotopicus albolarvatus,Bird,Piciformes
-v5,LEVI1,Hairy woodpecker,Leuconotopicus villosus,Bird,Piciformes
-v5,LEVI2,Hairy woodpecker,Leuconotopicus villosus,Bird,Piciformes
-v5,MEFO1,Acorn woodpecker,Melanerpes formicivorus,Bird,Piciformes
-v5,SPHY1,Sapsucker spp,Sphyrapicus spp.,Bird,Piciformes
-v5,SPHY2,Sapsucker spp,Sphyrapicus spp.,Bird,Piciformes
-v5,SPTH1,Williamson's sapsucker,Sphyrapicus thyroideus,Bird,Piciformes
-v5,FACO1,Merlin,Falco columbarius,Bird,Falconiformes
-v5,FASP1,American kestrel,Falco sparverius,Bird,Falconiformes
-v5,CAGU1,Hermit thrush,Catharus guttatus,Bird,Passeriformes
-v5,CAGU2,Hermit thrush,Catharus guttatus,Bird,Passeriformes
-v5,CAGU3,Hermit thrush,Catharus guttatus,Bird,Passeriformes
-v5,CAPU1,Wilson's warbler,Cardellina pusilla,Bird,Passeriformes
-v5,CAUS1,Swainson's thrush,Catharus ustulatus,Bird,Passeriformes
-v5,CAUS2,Swainson's thrush,Catharus ustulatus,Bird,Passeriformes
-v5,CCOO1,Olive-sided flycatcher,Contopus cooperi,Bird,Passeriformes
-v5,CCOO2,Olive-sided flycatcher,Contopus cooperi,Bird,Passeriformes
-v5,CHFA1,Wrentit,Chamaea fasciata,Bird,Passeriformes
-v5,COBR1,American crow,Corvus brachyrhyncos,Bird,Passeriformes
-v5,COCO1,Common raven,Corvus corax,Bird,Passeriformes
-v5,COSO1,Western wood-pewee,Contopus sordidulus,Bird,Passeriformes
-v5,CYST1,Steller's jay,Cyanocitta stelleri,Bird,Passeriformes
-v5,CYST2,Steller's jay,Cyanocitta stelleri,Bird,Passeriformes
-v5,EMDI1,Pacific-slope flycatcher,Empidonax difficilis,Bird,Passeriformes
-v5,EMOB1,Dusky flycatcher,Empidonax oberholseri,Bird,Passeriformes
-v5,HAPU1,Purple finch,Haemorhous purpureus,Bird,Passeriformes
-v5,HEVE1,Evening grosbeak,Hesperiphona verspertina,Bird,Passeriformes
-v5,IXNA1,Varied thrush,Ixoreus naevius,Bird,Passeriformes
-v5,IXNA2,Varied thrush,Ixoreus naevius,Bird,Passeriformes
-v5,JUHY1,Dark-eyed junco,Junco hyemalis,Bird,Passeriformes
-v5,LECE1,Orange-crowned warbler,Leiothlypis celata,Bird,Passeriformes
-v5,LOCU1,Red crossbill,Loxia curvirostra,Bird,Passeriformes
-v5,MYTO1,Townsend's solitaire,Myadestes townsendi,Bird,Passeriformes
-v5,NUCO1,Clark's nutcracker,Nucifraga columbiana,Bird,Passeriformes
-v5,PECA1,Canada jay,Perisoreus canadensis,Bird,Passeriformes
-v5,PHME1,Black-headed grosbeak,Pheucticus melanocephalus,Bird,Passeriformes
-v5,PILU1,Western tanager,Piranga ludoviciana,Bird,Passeriformes
-v5,PILU2,Western tanager,Piranga ludoviciana,Bird,Passeriformes
-v5,PIMA1,Spotted towhee,Pipilo maculatus,Bird,Passeriformes
-v5,PIMA2,Spotted towhee,Pipilo maculatus,Bird,Passeriformes
-v5,POEC1,Chickadee,Poecile spp.,Bird,Passeriformes
-v5,POEC2,Chickadee,Poecile spp.,Bird,Passeriformes
-v5,SICU1,Mountain bluebird,Sialia currucoides,Bird,Passeriformes
-v5,SITT1,Nuthatch spp,Sitta spp.,Bird,Passeriformes
-v5,SITT2,Nuthatch spp,Sitta spp.,Bird,Passeriformes
-v5,SPPA1,Chipping sparrow,Spizella passerina,Bird,Passeriformes
-v5,SPPI1,Pine siskin,Spinus pinus,Bird,Passeriformes
-v5,TRAE1,House wren,Troglodytes aedon,Bird,Passeriformes
-v5,TUMI1,American robin,Turdus migratorius,Bird,Passeriformes
-v5,TUMI2,American robin,Turdus migratorius,Bird,Passeriformes
-v5,VIHU1,Hutton's vireo,Vireo huttoni,Bird,Passeriformes
-v5,ZOLE1,White-crowned sparrow,Zonotrichia leucophrys,Bird,Passeriformes
-v5,CECA1,Elk,Cervus canadensis,Mammal,Artiodactyla
-v5,ODOC1,Deer,Odocoileus spp.,Mammal,Artiodactyla
-v5,CALA1,Coyote,Canis latrans,Mammal,Carnivora
-v5,CALU1,Wolf,Canis lupus,Mammal,Carnivora
-v5,URAM1,Black bear,Ursus americanus,Mammal,Carnivora
-v5,Wildcat,Wildcat,Felid,Mammal,Carnivora
-v5,OCPR1,American pika,Ochotona princeps,Mammal,Lagomorpha
-v5,TADO1,Douglas' squirrel,Tamiasciurus douglasii,Mammal,Rodentia
-v5,TADO2,Douglas' squirrel,Tamiasciurus douglasii,Mammal,Rodentia
-v5,TAMI1,Chipmunk,Neotamias spp.,Mammal,Rodentia
-v5,Airplane,Airplane,NA,Anthrophony,NA
-v5,Chainsaw,Chainsaw,NA,Anthrophony,NA
-v5,Growler,EA-18G Growler,NA,Anthrophony,NA
-v5,Gunshot,Gunshot,NA,Anthrophony,NA
-v5,Highway,Highway,NA,Anthrophony,NA
-v5,Horn,Car horn,NA,Anthrophony,NA
-v5,Human,Human,NA,Anthrophony,NA
-v5,Survey_Tone,Survey tone,NA,Anthrophony,NA
-v5,Train,Train,NA,Anthrophony,NA
-v5,Yarder,Yarder,NA,Anthrophony,NA
-v5,Chicken,Chicken,NA,Domestic animal,NA
-v5,Cow,Cow,NA,Domestic animal,NA
-v5,Dog,Dog,NA,Domestic animal,NA
-v5,Bullfrog,Bullfrog,NA,Herp,Anura
-v5,Frog,Frog,NA,Herp,Anura
-v5,Fly,Fly,NA,Insect,Diptera
-v5,Cricket,Cricket,NA,Insect,Orthoptera
-v5,Creek,Creek,NA,Geophony,NA
-v5,Rain,Rain,NA,Geophony,NA
-v5,Thunder,Thunder,NA,Geophony,NA
-v5,Tree,Tree creaking,NA,Geophony,NA
+Version,Class,Sound,Species,Category,Subcategory,Order
+v4,COCO,Common raven,Corvus corax,Birds,Corvids,Passeriformes
+v4,CYST,Steller's jay,Cyanocitta stelleri,Birds,Corvids,Passeriformes
+v4,NUCO,Clark's nutcracker,Nucifraga columbiana,Birds,Corvids,Passeriformes
+v4,PECA,Canada jay,Perisoreus canadensis,Birds,Corvids,Passeriformes
+v4,BRCA,Canada goose,Branta canadensis,Birds,Other birds,Anseriformes
+v4,BRMA,Marbled murrelet,Brachyramphus marmoratus,Birds,Other birds,Charadriiformes
+v4,CHMI,"Common nighthawk ""peent""",Chordeiles minor,Birds,Other birds,Caprimulgiformes
+v4,CHMI_IRREG,"Common nighthawk ""boom""",Chordeiles minor,Birds,Other birds,Caprimulgiformes
+v4,DEFU,Sooty grouse,Dendragapus fuliginosus,Birds,Other birds,Galliformes
+v4,ORPI,Mountain quail,Oreortyx pictus,Birds,Other birds,Galliformes
+v4,PAFA,Band-tailed pigeon,Patagioenas fasciata,Birds,Other birds,Columbiformes
+v4,PHNU,Common poorwill,Phalaenoptilus nuttallii,Birds,Other birds,Caprimulgiformes
+v4,ZEMA,Mourning dove,Zenaida macroura,Birds,Other birds,Columbiformes
+v4,AEAC,Northern saw-whet owl,Aegolius acadicus,Birds,Owls,Strigiformes
+v4,BUVI,Great horned owl,Bubo virginianus,Birds,Owls,Strigiformes
+v4,GLGN,Northern pygmy-owl,Glaucidium gnoma,Birds,Owls,Strigiformes
+v4,INSP,Barred owl inspection call,Strix varia,Birds,Owls,Strigiformes
+v4,MEKE,Western screech-owl,Megascops kennicotti,Birds,Owls,Strigiformes
+v4,PSFL,Flammulated owl,Psiloscops flammeolus,Birds,Owls,Strigiformes
+v4,STOC,Spotted owl location call,Strix occidentalis,Birds,Owls,Strigiformes
+v4,STOC_IRREG,Spotted owl series call,Strix occidentalis,Birds,Owls,Strigiformes
+v4,STVA,Barred owl eight-note call,Strix varia,Birds,Owls,Strigiformes
+v4,STVA_IRREG,Barred owl series call,Strix varia,Birds,Owls,Strigiformes
+v4,WHIS,Strix owl contact whistle,Strix sp.,Birds,Owls,Strigiformes
+v4,CAGU,Hermit thrush,Catharus guttatus,Birds,Songbirds,Passeriformes
+v4,CAUS,Swainson's thrush,Catharus ustulatus,Birds,Songbirds,Passeriformes
+v4,CCOO,Olive-sided flycatcher,Contopus cooperi,Birds,Songbirds,Passeriformes
+v4,CHFA,Wrentit,Chamaea fasciata,Birds,Songbirds,Passeriformes
+v4,IXNA,Varied thrush,Ixoreus naevius,Birds,Songbirds,Passeriformes
+v4,MYTO,Townsend's solitaire,Myadestes townsendi,Birds,Songbirds,Passeriformes
+v4,PIMA,Spotted towhee,Pipilo maculatus,Birds,Songbirds,Passeriformes
+v4,POEC,Chickadee song,Poecile sp.,Birds,Songbirds,Passeriformes
+v4,SITT,Nuthatch,Sitta sp.,Birds,Songbirds,Passeriformes
+v4,TUMI,American robin whinny,Turdus migratorius,Birds,Songbirds,Passeriformes
+v4,COAU,Northern flicker series,Colaptes auratus,Birds,Woodpeckers,Piciformes
+v4,COAU2,"Northern flicker ""skew""",Colaptes auratus,Birds,Woodpeckers,Piciformes
+v4,DRPU,Downy woodpecker call,Dryobates pubescens,Birds,Woodpeckers,Piciformes
+v4,DRUM,Woodpecker (non-sapsucker) drum,NA,Birds,Woodpeckers,Piciformes
+v4,HYPI,Pileated woodpecker call,Dryocopus pileatus,Birds,Woodpeckers,Piciformes
+v4,SPRU,Sapsucker drum,Sphyrapicus spp.,Birds,Woodpeckers,Piciformes
+v4,CALU,Wolf howl,Canis lupus,Mammals,Mammals,Carnivora
+v4,OCPR,American pika,Ochotona princeps,Mammals,Mammals,Lagomorpha
+v4,TADO1,Douglas squirrel rattle,Tamasciurus douglasii,Mammals,Mammals,Rodentia
+v4,TADO2,Douglas squirrel chirp,Tamasciurus douglasii,Mammals,Mammals,Rodentia
+v4,TAMI,Chipmunk spp. chirp,Neotamias sp.,Mammals,Mammals,Rodentia
+v4,DOG,Dog barks,NA,Anthrophony,Anthrophony,NA
+v4,HOSA,Human speech,NA,Anthrophony,Anthrophony,NA
+v4,SHOT,Gunshot,NA,Anthrophony,Anthrophony,NA
+v4,YARD,Yarder (machine),NA,Anthrophony,Anthrophony,NA
+v4,FLY,Insect buzz,NA,Environmental,Environmental sound,NA
+v4,FROG,Frog chorus,NA,Environmental,Environmental sound,NA
+v5,COBR1,American crow,Corvus brachyrhyncos,Birds,Corvids,Passeriformes
+v5,COCO1,Common raven,Corvus corax,Birds,Corvids,Passeriformes
+v5,CYST1,Steller's jay,Cyanocitta stelleri,Birds,Corvids,Passeriformes
+v5,CYST2,Steller's jay,Cyanocitta stelleri,Birds,Corvids,Passeriformes
+v5,NUCO1,Clark's nutcracker,Nucifraga columbiana,Birds,Corvids,Passeriformes
+v5,PECA1,Canada jay,Perisoreus canadensis,Birds,Corvids,Passeriformes
+v5,ANCA1,Sandhill crane,Antigone canadensis,Birds,Other birds,Gruiformes
+v5,BOUM1,Ruffed grouse,Bonasa umbellus,Birds,Other birds,Galliformes
+v5,BRCA1,Canada goose,Branta canadensis,Birds,Other birds,Anseriformes
+v5,BRMA1,Marbled murrelet keer call,Brachyramphus marmoratus,Birds,Other birds,Charadriiformes
+v5,BRMA2,Marbled murrelet,Brachyramphus marmoratus,Birds,Other birds,Charadriiformes
+v5,CACA1,California quail,Callipepla californica,Birds,Other birds,Galliformes
+v5,CHMI1,"Common nighthawk ""peent""",Chordeiles minor,Birds,Other birds,Caprimulgiformes
+v5,CHMI2,"Common nighthawk ""boom""",Chordeiles minor,Birds,Other birds,Caprimulgiformes
+v5,DEFU1,Sooty grouse,Dendragapus fuliginosus,Birds,Other birds,Galliformes
+v5,DEFU2,Sooty grouse,Dendragapus fuliginosus,Birds,Other birds,Galliformes
+v5,GADE1,Wilson's snipe,Gallinago delicata,Birds,Other birds,Charadriiformes
+v5,MEGA1,Wild turkey,Meleagris gallapavo,Birds,Other birds,Galliformes
+v5,ORPI1,Mountain quail,Oreortyx pictus,Birds,Other birds,Galliformes
+v5,ORPI2,Mountain quail,Oreortyx pictus,Birds,Other birds,Galliformes
+v5,PAFA1,Band-tailed pigeon,Patagioenas fasciata,Birds,Other birds,Columbiformes
+v5,PAFA2,Band-tailed pigeon,Patagioenas fasciata,Birds,Other birds,Columbiformes
+v5,PHNU1,Common poorwill,Phalaenoptilus nuttallii,Birds,Other birds,Caprimulgiformes
+v5,STDE1,Eurasian collared dove,Streptopelia decaocto,Birds,Other birds,Columbiformes
+v5,ZEMA1,Mourning dove,Zenaida macrourus,Birds,Other birds,Columbiformes
+v5,AEAC1,Northern saw-whet owl,Aegolius acadicus,Birds,Owls,Strigiformes
+v5,AEAC2,Northern saw-whet owl,Aegolius acadicus,Birds,Owls,Strigiformes
+v5,ASOT1,Long-eared owl,Asio otus,Birds,Owls,Strigiformes
+v5,BUVI1,Great horned owl song,Bubo virginianus,Birds,Owls,Strigiformes
+v5,BUVI2,Great horned owl calls,Bubo virginianus,Birds,Owls,Strigiformes
+v5,GLGN1,Northern pygmy-owl,Glaucidium califonicum,Birds,Owls,Strigiformes
+v5,MEKE1,Western screech-owl trill,Megascops kennicottii,Birds,Owls,Strigiformes
+v5,MEKE2,Western screech-owl bark,Megascops kennicottii,Birds,Owls,Strigiformes
+v5,MEKE3,Western screech-owl juvenile,Megascops kennicottii,Birds,Owls,Strigiformes
+v5,PSFL1,Flammulated owl,Psiloscops flammeolus,Birds,Owls,Strigiformes
+v5,STNE1,Great grey owl,Strix nebulosa,Birds,Owls,Strigiformes
+v5,STNE2,Great grey owl,Strix nebulosa,Birds,Owls,Strigiformes
+v5,STOC_4Note,Spotted owl four-note location call,Strix occidentalis,Birds,Owls,Strigiformes
+v5,STOC_Series,Spotted owl series call,Strix occidentalis,Birds,Owls,Strigiformes
+v5,Strix_Bark,Strix owl bark,Strix spp.,Birds,Owls,Strigiformes
+v5,Strix_Whistle,Strix owl contact whistle,Strix spp.,Birds,Owls,Strigiformes
+v5,STVA_8Note,Barred owl eight-note call,Strix varia,Birds,Owls,Strigiformes
+v5,STVA_Insp,Barred owl inspection call,Strix varia,Birds,Owls,Strigiformes
+v5,STVA_Series,Barred owl series call,Strix varia,Birds,Owls,Strigiformes
+v5,ACCO1,Cooper's hawk series call,Accipiter cooperii,Birds,Raptors,Accipitriformes
+v5,ACGE1,Northern goshawk series call,Accipiter gentilis,Birds,Raptors,Accipitriformes
+v5,ACGE2,Northern goshawk scream,Accipiter gentilis,Birds,Raptors,Accipitriformes
+v5,ACST1,Sharp-shinned hawk series call,Accipiter striatus,Birds,Raptors,Accipitriformes
+v5,BUJA1,Red-tailed hawk scream,Buteo jamaicensis,Birds,Raptors,Accipitriformes
+v5,BUJA2,Red-tailed hawk other call,Buteo jamaicensis,Birds,Raptors,Accipitriformes
+v5,FACO1,Merlin,Falco columbarius,Birds,Raptors,Falconiformes
+v5,FASP1,American kestrel,Falco sparverius,Birds,Raptors,Falconiformes
+v5,HALE1,Bald eagle,Haliaeetus leucocephalus,Birds,Raptors,Accipitriformes
+v5,PAHA1,Osprey,Pandion haliaetus,Birds,Raptors,Accipitriformes
+v5,Raptor,Raptor scream call,Accipitrid,Birds,Raptors,Accipitriformes
+v5,CAGU1,Hermit thrush,Catharus guttatus,Birds,Songbirds,Passeriformes
+v5,CAGU2,Hermit thrush,Catharus guttatus,Birds,Songbirds,Passeriformes
+v5,CAGU3,Hermit thrush,Catharus guttatus,Birds,Songbirds,Passeriformes
+v5,CAPU1,Wilson's warbler,Cardellina pusilla,Birds,Songbirds,Passeriformes
+v5,CAUS1,Swainson's thrush,Catharus ustulatus,Birds,Songbirds,Passeriformes
+v5,CAUS2,Swainson's thrush,Catharus ustulatus,Birds,Songbirds,Passeriformes
+v5,CCOO1,Olive-sided flycatcher,Contopus cooperi,Birds,Songbirds,Passeriformes
+v5,CCOO2,Olive-sided flycatcher,Contopus cooperi,Birds,Songbirds,Passeriformes
+v5,CHFA1,Wrentit,Chamaea fasciata,Birds,Songbirds,Passeriformes
+v5,COSO1,Western wood-pewee,Contopus sordidulus,Birds,Songbirds,Passeriformes
+v5,EMDI1,Pacific-slope flycatcher,Empidonax difficilis,Birds,Songbirds,Passeriformes
+v5,EMOB1,Dusky flycatcher,Empidonax oberholseri,Birds,Songbirds,Passeriformes
+v5,HAPU1,Purple finch,Haemorhous purpureus,Birds,Songbirds,Passeriformes
+v5,HEVE1,Evening grosbeak,Hesperiphona verspertina,Birds,Songbirds,Passeriformes
+v5,IXNA1,Varied thrush,Ixoreus naevius,Birds,Songbirds,Passeriformes
+v5,IXNA2,Varied thrush,Ixoreus naevius,Birds,Songbirds,Passeriformes
+v5,JUHY1,Dark-eyed junco,Junco hyemalis,Birds,Songbirds,Passeriformes
+v5,LECE1,Orange-crowned warbler,Leiothlypis celata,Birds,Songbirds,Passeriformes
+v5,LOCU1,Red crossbill,Loxia curvirostra,Birds,Songbirds,Passeriformes
+v5,MYTO1,Townsend's solitaire,Myadestes townsendi,Birds,Songbirds,Passeriformes
+v5,PHME1,Black-headed grosbeak,Pheucticus melanocephalus,Birds,Songbirds,Passeriformes
+v5,PILU1,Western tanager song,Piranga ludoviciana,Birds,Songbirds,Passeriformes
+v5,PILU2,Western tanager call,Piranga ludoviciana,Birds,Songbirds,Passeriformes
+v5,PIMA1,Spotted towhee song,Pipilo maculatus,Birds,Songbirds,Passeriformes
+v5,PIMA2,Spotted towhee call,Pipilo maculatus,Birds,Songbirds,Passeriformes
+v5,POEC1,Chickadee song,Poecile spp.,Birds,Songbirds,Passeriformes
+v5,POEC2,Chickadee call,Poecile spp.,Birds,Songbirds,Passeriformes
+v5,SICU1,Mountain bluebird,Sialia currucoides,Birds,Songbirds,Passeriformes
+v5,SITT1,Nuthatch spp,Sitta spp.,Birds,Songbirds,Passeriformes
+v5,SITT2,Nuthatch spp,Sitta spp.,Birds,Songbirds,Passeriformes
+v5,SPPA1,Chipping sparrow,Spizella passerina,Birds,Songbirds,Passeriformes
+v5,SPPI1,Pine siskin,Spinus pinus,Birds,Songbirds,Passeriformes
+v5,TRAE1,House wren,Troglodytes aedon,Birds,Songbirds,Passeriformes
+v5,TUMI1,American robin whinny,Turdus migratorius,Birds,Songbirds,Passeriformes
+v5,TUMI2,American robin clucks and other calls,Turdus migratorius,Birds,Songbirds,Passeriformes
+v5,VIHU1,Hutton's vireo,Vireo huttoni,Birds,Songbirds,Passeriformes
+v5,ZOLE1,White-crowned sparrow,Zonotrichia leucophrys,Birds,Songbirds,Passeriformes
+v5,COAU1,Northern flicker series call,Colaptes auratus,Birds,Woodpeckers,Piciformes
+v5,COAU2,"Northern flicker ""skew""",Colaptes auratus,Birds,Woodpeckers,Piciformes
+v5,DRPU1,Downy woodpecker,Dryobates pubescens,Birds,Woodpeckers,Piciformes
+v5,Drum,Woodpecker (non-sapsucker) drum,Picid,Birds,Woodpeckers,Piciformes
+v5,HYPI1,Pileated woodpecker,Dryocopus pileatus,Birds,Woodpeckers,Piciformes
+v5,LEAL1,White-headed woodpecker,Leuconotopicus albolarvatus,Birds,Woodpeckers,Piciformes
+v5,LEVI1,Hairy woodpecker,Leuconotopicus villosus,Birds,Woodpeckers,Piciformes
+v5,LEVI2,Hairy woodpecker,Leuconotopicus villosus,Birds,Woodpeckers,Piciformes
+v5,MEFO1,Acorn woodpecker,Melanerpes formicivorus,Birds,Woodpeckers,Piciformes
+v5,SPHY1,Sapsucker spp drum,Sphyrapicus spp.,Birds,Woodpeckers,Piciformes
+v5,SPHY2,Sapsucker spp call,Sphyrapicus spp.,Birds,Woodpeckers,Piciformes
+v5,SPTH1,Williamson's sapsucker drum,Sphyrapicus thyroideus,Birds,Woodpeckers,Piciformes
+v5,CALA1,Coyote,Canis latrans,Mammals,Mammals,Carnivora
+v5,CALU1,Wolf howl,Canis lupus,Mammals,Mammals,Carnivora
+v5,CECA1,Elk,Cervus canadensis,Mammals,Mammals,Artiodactyla
+v5,OCPR1,American pika,Ochotona princeps,Mammals,Mammals,Lagomorpha
+v5,ODOC1,Deer snort,Odocoileus spp.,Mammals,Mammals,Artiodactyla
+v5,TADO1,Douglas squirrel rattle,Tamiasciurus douglasii,Mammals,Mammals,Rodentia
+v5,TADO2,Douglas squirrel chirp,Tamiasciurus douglasii,Mammals,Mammals,Rodentia
+v5,TAMI1,Chipmunk spp. chirp,Neotamias spp.,Mammals,Mammals,Rodentia
+v5,URAM1,Black bear juvenile,Ursus americanus,Mammals,Mammals,Carnivora
+v5,Wildcat,Wildcat scream,Felid,Mammals,Mammals,Carnivora
+v5,Airplane,Airplane,NA,Anthrophony,Anthrophony,NA
+v5,Chainsaw,Chainsaw,NA,Anthrophony,Anthrophony,NA
+v5,Growler,Military jet,NA,Anthrophony,Anthrophony,NA
+v5,Gunshot,Gunshot,NA,Anthrophony,Anthrophony,NA
+v5,Highway,Highway noise,NA,Anthrophony,Anthrophony,NA
+v5,Horn,Car horn,NA,Anthrophony,Anthrophony,NA
+v5,Human,Human speech,NA,Anthrophony,Anthrophony,NA
+v5,Survey_Tone,Spotted owl survey tone,NA,Anthrophony,Anthrophony,NA
+v5,Train,Train,NA,Anthrophony,Anthrophony,NA
+v5,Yarder,Yarder (machine),NA,Anthrophony,Anthrophony,NA
+v5,Bullfrog,Bullfrog,NA,Environmental,Environmental sound,Anura
+v5,Chicken,Chicken,NA,Environmental,Environmental sound,NA
+v5,Cow,Cow,NA,Environmental,Environmental sound,NA
+v5,Creek,Stream noise,NA,Environmental,Environmental sound,NA
+v5,Cricket,Cricket,NA,Environmental,Environmental sound,Orthoptera
+v5,Dog,Dog,NA,Environmental,Environmental sound,NA
+v5,Fly,Buzzing insect,NA,Environmental,Environmental sound,Diptera
+v5,Frog,Frog chorus,NA,Environmental,Environmental sound,Anura
+v5,Rain,Rain,NA,Environmental,Environmental sound,NA
+v5,Thunder,Thunder,NA,Environmental,Environmental sound,NA
+v5,Tree,Tree creaking,NA,Environmental,Environmental sound,NA
