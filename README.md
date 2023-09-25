@@ -1,5 +1,6 @@
 # Shiny_PNW-Cnet
-Shiny-based desktop application to process audio data and facilitate automatic detection and human review of vocalizations of several dozen species native to the Pacific Northwest, USA. Uses the latest version (v4) of the PNW-Cnet neural network with 51 target classes. Run through RStudio; also requires SoX.
+Shiny-based desktop application to process audio data and facilitate automatic detection and human review of vocalizations of several dozen species native to the Pacific Northwest, USA. Uses the PNW-Cnet neural network with either 135 (v5) or 51 (v4) target classes. Runs through RStudio; also requires SoX.
+
 See the document "Shiny_PNW-Cnet_installation_and_use" for detailed instructions on installation and use of the tool.
 
 To get started, click the green Code button at the top right and choose Download ZIP, then extract the folder into your RStudio home directory.
@@ -8,15 +9,15 @@ To get started, click the green Code button at the top right and choose Download
 
 A few notes on installation issues:
 
-The <code>reticulate::install_miniconda()</code> function is currently failing to create the <code>r-reticulate</code> environment correctly. We recommend installing Miniconda by downloading and running the latest Windows installer from https://docs.conda.io/en/latest/miniconda.html. For greatest ease of use, set the install location to <code>C:\\Users\\[USERNAME]\\AppData\\Local\\r-miniconda</code>.
+1\. The <code>reticulate::install_miniconda()</code> function is currently failing to create the <code>r-reticulate</code> environment correctly. We recommend installing Miniconda by downloading and running the latest Windows installer from https://docs.conda.io/en/latest/miniconda.html. For greatest ease of use, set the install location to <code>C:\\Users\\[USERNAME]\\AppData\\Local\\r-miniconda</code>.
 
-You may receive an error like the following when launching the app:
+2\. You may receive an error like the following when launching the app:
 
 <code>Error in py_run_file_impl(file, local, convert):</code>
-    
+
 <code>NameError: name 'base_events' is not defined</code>
 
-The latest release of the <code>reticulate</code> R package is not working correctly with the <code>asyncio</code> Python package, which is required to run TensorFlow. To get around this, you will need to install the development version of <code>reticulate</code>, which includes a fix for this issue. First download and install the appropriate version of Rtools from https://cran.r-project.org/bin/windows/Rtools/ (the Rtools version should match the version of R that you are running), then install the <code>pak</code> R package and run <code>pak::pak("rstudio/reticulate")</code>. This will download, compile and install the development version of <code>reticulate</code>. After restarting R and RStudio, the app should launch successfully.
+This is because the latest release of the <code>reticulate</code> R package is not working correctly with the <code>asyncio</code> Python package, which is required to run TensorFlow. To get around this, you will need to install the development version of <code>reticulate</code>, which includes a fix for this issue. First download and install the appropriate version of Rtools from https://cran.r-project.org/bin/windows/Rtools/ (use the Rtools version that matches the version of R that you are running), then install the <code>pak</code> R package and run <code>pak::pak("rstudio/reticulate")</code>. This will download, compile and install the development version of <code>reticulate</code>. After restarting R and RStudio, the app should launch successfully.
 
 <b>07 Aug 2023:</b>
 
