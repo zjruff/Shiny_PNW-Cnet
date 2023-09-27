@@ -60,7 +60,7 @@ def makePredictions(target_dir, model_path, show_prog = False):
 
     # The generator uses the dataframe of image paths to feed batches of image
     # data to the neural net after rescaling the 8-bit integer pixel values to 
-    # floating-point.
+    # floating-point in the range [0,1].
     image_generator = tf.keras.preprocessing.image.ImageDataGenerator(
         rescale = 1./255)
     
@@ -75,8 +75,7 @@ def makePredictions(target_dir, model_path, show_prog = False):
         class_mode = None,
         shuffle = False)
 
-    # This will of course spit out the usual warning about the model having not
-    # been compiled, which can be safely ignored.
+    # Spits out a few informational and warning messages which can be safely ignored.
     pnw_cnet_model = tf.keras.models.load_model(model_path)
 
     # Progress bar is kind of obnoxious when running in RStudio (prints a separate
@@ -95,7 +94,7 @@ def makePredictions(target_dir, model_path, show_prog = False):
         print("Warning: Prediction dataframe has unexpected number of columns. Cannot determine class names.")
         score_cols = ["Class_%s" % str(i).zfill(int(math.log10(n_cols))+1) for i in range(1, n_cols + 1)]
 
-    predictions = pd.DataFrame(data = class_scores, columns = score_cols)
+    predictions = pd.DataFrame(data = class_scores, columns = score_cols).round(decimals = 5)
     predictions.insert(loc = 0, column = "Filename", 
         value = [os.path.basename(path) for path in image_paths])
 
