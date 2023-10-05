@@ -1,7 +1,7 @@
 # Sept 2023
 # A script to generate spectrograms representing 12-second segments of audio in
 # the frequency range [0, 4000 Hz]. Splits up the spectrogram generation across
-# multiple folders. Progress bar generally behaves.
+# multiple folders.
 
 import math, os, subprocess, sys, time, wave
 import multiprocessing as mp
@@ -10,7 +10,7 @@ from multiprocessing import JoinableQueue, Process, Queue
 # Adjust this if necessary
 sox_path = r"C:\Program Files (x86)\sox-14-4-2\sox.exe"
 
-# Returns a sorted list of all .wav files under topdir.
+# Returns a sorted list of all files with extension <ext> under <topdir>.
 def findFiles(topdir, ext):
     files_found = []
     for root, dirs, files in os.walk(topdir):
@@ -19,7 +19,7 @@ def findFiles(topdir, ext):
                 files_found.append(os.path.join(root, file))
     return sorted(files_found)
 
-# Returns the length of a given wav file in hours or seconds.
+# Returns the length of the wav file at <wav_path> in hours or seconds.
 def getWavLength(wav_path, mode='h'):
     try:
         with wave.open(wav_path) as w:
@@ -33,7 +33,7 @@ def getWavLength(wav_path, mode='h'):
     else:
         return wav_length_s
 
-# Returns the size of a given file in gigabytes (or technically gibibytes).
+# Returns the size of the file at <file_path> in gibibytes.
 def getFileSizeGB(file_path):
     gb_conversion = float(1024**-3)
     size_gb = os.path.getsize(file_path) * gb_conversion
@@ -45,7 +45,7 @@ def makeSoxCmds(wav_path, sox_path, output_dir):
     wav_name = os.path.basename(wav_path)
     wav_length = getWavLength(wav_path, 's')
     n_segments = int(wav_length / 12) + 1
-    n_digits = max(len(str(n_segments)), 3)
+    n_digits = max(int(math.log10(n_segments)) + 1, 3)
     sox_cmds = []
     for i in range(1, n_segments+1):
         offs = 12 * (i - 1)
@@ -65,7 +65,7 @@ def makeSoxCmds(wav_path, sox_path, output_dir):
 # where spectrograms from each will be generated.
 def makeSpectroDirList(wav_list, image_dir, n_chunks):
     chunk_size = int(len(wav_list) / n_chunks) + 1
-    n_digits = int(math.log10(n_chunks)) + 1
+    n_digits = max(int(math.log10(n_chunks)) + 1, 2)
     wav_chunks = [int(i / chunk_size) + 1 for i in range(len(wav_list))]
     dst_dirs = [os.path.join(image_dir, "part_{0}".format(str(j).zfill(n_digits))) for j in wav_chunks]
     wav_key = list(zip(wav_list, dst_dirs))
