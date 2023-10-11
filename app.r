@@ -21,7 +21,8 @@ ncores_logical <- detectCores()
 ncores_physical <- detectCores(logical = FALSE)
 
 # Change the following line if you installed SoX in a different location.
-sox_dir <- "C:/Program Files (x86)/sox-14-4-2"
+# Be sure to use forward slashes / or doubled backslashes \\ in the folder path!
+sox_dir <- "C:/Program Files (x86)/sox-14-4-2" 
 sox_path <- file.path(sox_dir, "sox")
 
 # Setting up to run with either version of PNW-Cnet (v4 or v5)
