@@ -16,7 +16,9 @@ A few notes on installation issues:
 
 <code>NameError: name 'base_events' is not defined</code>
 
-This is because the latest release of the <code>reticulate</code> R package is not working correctly with the <code>asyncio</code> Python package, which is required to run TensorFlow. To get around this, you will need to install the development version of <code>reticulate</code>, which includes a fix for this issue. First download and install the appropriate version of Rtools from https://cran.r-project.org/bin/windows/Rtools/ (use the Rtools version that matches the version of R that you are running), then install the <code>pak</code> R package and run <code>pak::pak("rstudio/reticulate")</code>. This will download, compile and install the development version of <code>reticulate</code>. After restarting R and RStudio, the app should launch successfully.
+This is because the latest release of the <code>reticulate</code> R package is not working correctly with the <code>asyncio</code> Python package, which is required to run TensorFlow. To get around this, you will need to install the development version of <code>reticulate</code>, which includes a fix for this issue. First download and install Rtools from https://cran.r-project.org/bin/windows/Rtools/ (use the Rtools version that matches the version of R that you are running). 
+
+Then, in the RStudio console, install the <code>pak</code> R package by running <code>install.packages("pak")</code>, then run <code>pak::pak("rstudio/reticulate")</code>, which will download, compile and install the development version of <code>reticulate</code>. After restarting R and RStudio, the app should launch successfully.
 
 <b>07 Aug 2023:</b>
 
